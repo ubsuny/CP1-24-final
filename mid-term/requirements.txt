@@ -1,3 +1,5 @@
+pylint
+pytest
 numpy
 pandas
 matplotlib
