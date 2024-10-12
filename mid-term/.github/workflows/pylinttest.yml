@@ -18,13 +18,16 @@ jobs:
         python-version: '3.x'
     - name: Install dependencies
       run: |
+        if: always()
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Lint with pylint
+      if: always()
       run: |
         pip install pylint
         pylint $(git ls-files '*.py')
     - name: Test with pytest
+      if: always()
       run: |
         pip install pytest
         pytest $(git ls-files '*.py') --doctest-modules
