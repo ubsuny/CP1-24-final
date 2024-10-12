@@ -21,6 +21,7 @@ This is the midterm for CP1-24 based on getting and using research data using th
    - that calculate the direction of motion from the acceleration data (5p)
    - to read out the data and time from each metafile and convert it into unix time (https://en.wikipedia.org/wiki/Unix_time) (3p)
 - All python modules have to be linted using pylint (https://pylint.readthedocs.io/en/stable/) and get a full score using the default settings to get full points.
+- Only python libraries listed in requirements.txt can be used
 
 *Documentation (12 points):*
 - Generate docstrings for your modules and functions (4 points).
@@ -29,7 +30,7 @@ This is the midterm for CP1-24 based on getting and using research data using th
 - Describe in a seperate markdown file how to run your code (4 points).
 
 *Tools (6 points):*
-- Write unit tests using the pytest framework for all modules (4 points).
+- Write unit tests using the pytest framework for all modules. Tests have to be in a seperate file following the pattern `test_*.py` (4 points).
 - Add a bibliography in your documentation and references to all sources you used (2 points).
 
 ## How to work on your midterm project on github
