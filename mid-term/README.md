@@ -9,7 +9,7 @@ This is the midterm for CP1-24 based on getting and using research data using th
 - Use the Acceleration (without g) app to record the linear accelaration in $x,y,z$ for the following events:
    - Take the elevator in any UB north campus building from the lowest to the top floor
    - Take the elevator in any UB north campus building from the top to the lowest floor
-- After each experiment export all collected data as csv files and generate an additional markdown file (named following this pattern: `"unique id"_"experiment name".md` with the following meta information:
+- After each experiment export all collected data as csv files and generate an additional markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL009_gps_circle_run09.md`) with the following meta information:
    - Date and time of the experiment
    - Current weather conditions
    - Any additional information regarding the experiment
