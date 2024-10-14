@@ -9,7 +9,7 @@ This is the midterm for CP1-24 based on getting and using research data using th
 - Use the Acceleration (without g) app to record the linear accelaration in $x,y,z$ for the following events:
    - Take the elevator in any UB north campus building from the lowest to the top floor
    - Take the elevator in any UB north campus building from the top to the lowest floor
-- After each experiment export all collected data as a csv files and generate an additional markdown file with the following meta information:
+- After each experiment export all collected data as csv files and generate an additional markdown file (named following this pattern: `"unique id"_"experiment name".md` with the following meta information:
    - Date and time of the experiment
    - Current weather conditions
    - Any additional information regarding the experiment
@@ -17,8 +17,8 @@ This is the midterm for CP1-24 based on getting and using research data using th
 *Algorithm (15 points):*
 - write the following python modules that implement general functions:
    - for a unit converter for feet and yard to an SI equivalent (2p)
-   - that calculate the distance between two adjacent GPS positions (bonus point if you consider the earth not being flat) (5p)
-   - that calculate the direction of motion from the acceleration data (5p)
+   - that calculate the distance between two recorded adjacent GPS positions (bonus point if you consider the earth not being flat) (5p)
+   - that calculate the direction of motion from the recorded acceleration data (5p)
    - to read out the data and time from each metafile and convert it into unix time (https://en.wikipedia.org/wiki/Unix_time) (3p)
 - All python modules have to be linted using pylint (https://pylint.readthedocs.io/en/stable/) and get a full score using the default settings to get full points.
 - Only python libraries listed in requirements.txt can be used
