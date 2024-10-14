@@ -45,3 +45,11 @@ This is the midterm for CP1-24 based on getting and using research data using th
 
 
 
+## License
+This midterm project is under GPLv3 license (see LICENSE file).
+If you use any code or other external content that you didn't creat it is your responsibility if that code is compatible to be included in a GPLv3 project. Any code that is used from somewhere else has to be attributed in the NOTES file in the folloowing form:
+
+``` text
+date / commit hash:
+"Your github Username": filename - Lines of code and Attribution
+```
