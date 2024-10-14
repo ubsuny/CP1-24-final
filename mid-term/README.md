@@ -25,8 +25,8 @@ This is the midterm for CP1-24 based on getting and using research data using th
 
 *Documentation (12 points):*
 - Generate docstrings for your modules and functions (4 points).
-- Generate one figure of your GPS motion in a x,y plane and save it as a png file (2 points)
-- Generate one figure of your direction  in the elevator over time and save it as a png file(2 points)
+- Generate *one* figure of your GPS motions in a x,y plane and save it as a png file (2 points)
+- Generate *one* figure of your directions in the elevator over time and save it as a png file (2 points)
 - Describe in a seperate markdown file how to run your code (4 points).
 
 *Tools (6 points):*
