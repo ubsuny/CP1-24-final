@@ -15,7 +15,7 @@ This is the midterm for CP1-24 based on getting and using research data using th
    - Any additional information regarding the experiment
 
 *Algorithm (15 points):*
-- write the following python modules that implement general functions:
+- write the following python modules that implement importable functions:
    - for a unit converter for feet and yard to an SI equivalent (2p)
    - that calculate the distance between two recorded adjacent GPS positions (bonus point if you consider the earth not being flat) (5p)
    - that calculate the direction of motion from the recorded acceleration data (5p)
