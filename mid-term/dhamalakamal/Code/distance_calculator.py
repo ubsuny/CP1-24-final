@@ -1,11 +1,23 @@
-import pandas as pd
+"""
+This module provides functions for calculating distance between two adjacent gps data.
+
+Functions:
+load_gps_data(file_path): Loads GPS positions containin latitude and longitude
+
+calculate_distance(gps_data): Calculates distance between 2 adjacent coordinates
+
+haversine(lat1, lon1, lat2, lon2): Haversine function to convert and calculate distance in meters
+
+"""
+
 import math
+import pandas as pd
 
 # Initialize global variables
 # Radius of the Earth in meters
 R = 6371000
 # Required columns list
-columns_needed = ["Latitude (°)","Longitude (°)"]
+COLUMNS_NEEDED = ["Latitude (°)","Longitude (°)"]
 
 
 def load_gps_data(file_path):
@@ -20,16 +32,17 @@ def load_gps_data(file_path):
         gps_data = pd.read_csv(file_path, header=0)
 
         # Extract only the latitude and longitude columns
-        gps_lat_lon_data = gps_data[columns_needed]
+        gps_lat_lon_data = gps_data[COLUMNS_NEEDED]
         print("GPS data loaded successfully.")
         return gps_lat_lon_data
-    except Exception as e:
+    except ImportError as e:
         print(f"Error loading GPS data: {e}")
         return None
 
 def haversine(lat1, lon1, lat2, lon2):
     """
-    Calculate the great-circle distance between two points on the Earth's surface using the Haversine formula.
+    Calculate the great-circle distance between two points on the Earth's surface
+     using the Haversine formula.
     
     :param lat1: Latitude of the first point.
     :param lon1: Longitude of the first point.
@@ -45,7 +58,7 @@ def haversine(lat1, lon1, lat2, lon2):
     dlon = lon2 - lon1
     a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     c = 2 * math.asin(math.sqrt(a))
-    
+
     # Distance in meters
     distance = R * c
     return distance
@@ -65,4 +78,3 @@ def calculate_distances(gps_data):
         distance = haversine(lat1, lon1, lat2, lon2)
         distances.append(distance)
     return distances
-
