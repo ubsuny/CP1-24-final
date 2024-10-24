@@ -1,6 +1,10 @@
+"""
+This module converts feet and yard to metre.
+"""
 # Conversion factors
 FEET_TO_METERS = 0.3048
 YARDS_TO_METERS = 0.9144
+
 def feet_to_meters(feet):
     """
     Convert feet to meters.
@@ -10,6 +14,7 @@ def feet_to_meters(feet):
     float: The distance in meters.
     """
     return feet * FEET_TO_METERS
+
 def yards_to_meters(yards):
     """
     Convert yards to meters.
