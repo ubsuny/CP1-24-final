@@ -26,7 +26,11 @@ CSV File Structure:
 import pandas as pd
 import numpy as np
 
-COLS = ["Linear Acceleration x (m/s^2)","Linear Acceleration y (m/s^2)","Linear Acceleration z (m/s^2)"]
+COLS = [
+    "Linear Acceleration x (m/s^2)",
+    "Linear Acceleration y (m/s^2)",
+    "Linear Acceleration z (m/s^2)"
+    ]
 
 def calculate_direction(acc_x, acc_y, acc_z):
     """

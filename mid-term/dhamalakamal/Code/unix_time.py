@@ -13,7 +13,10 @@ Functions:
 import re
 from datetime import datetime
 
-def extract_datetime_from_md(md_content,date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}',time_format='%Y-%m-%d %H:%M:%S'):
+def extract_datetime_from_md(
+        md_content,date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}',
+        time_format='%Y-%m-%d %H:%M:%S'
+        ):
     """
     Extracts a date and time string from Markdown content based on a specified pattern 
     and converts it to Unix time.
@@ -38,7 +41,9 @@ def extract_datetime_from_md(md_content,date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\
         return unix_converted_time
     return None
 
-def read_md_file_and_convert_to_unix(file_path, date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'):
+def read_md_file_and_convert_to_unix(
+        file_path, date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+        ):
     """
     Reads a markdown file, extracts date and time, and converts it to Unix time.
 
