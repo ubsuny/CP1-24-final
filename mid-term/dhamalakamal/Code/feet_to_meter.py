@@ -1,5 +1,6 @@
 """
-This module provides simple conversion functions to convert distances from feet and yards to meters.
+This module provides simple conversion functions to convert distances from 
+feet and yards to meters.
 
 Constants:
     - FEET_TO_METERS: Conversion factor from feet to meters (1 foot = 0.3048 meters).
