@@ -204,7 +204,10 @@ def test_calculate_directions_from_csv(tmp_path):
     for i, (azimuth, elevation) in enumerate(directions):
         expected_azimuth, expected_elevation = expected_directions[i]
         assert np.isclose(azimuth, expected_azimuth, atol=1e-5), f"Azimuth mismatch at index {i}"
-        assert np.isclose(elevation, expected_elevation, atol=1e-5), f"Elevation mismatch at index {i}"
+        assert np.isclose(
+            elevation, expected_elevation,
+            atol=1e-5
+            ), f"Elevation mismatch at index {i}"
 
 def test_extract_datetime_from_md():
     """
