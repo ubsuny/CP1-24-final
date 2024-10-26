@@ -22,7 +22,6 @@ Test Cases:
 
 """
 from io import StringIO
-import tempfile
 import os
 import pytest
 import pandas as pd
