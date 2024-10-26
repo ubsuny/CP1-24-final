@@ -3,4 +3,3 @@ pytest
 numpy
 pandas
 matplotlib
-math
