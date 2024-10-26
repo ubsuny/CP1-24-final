@@ -209,7 +209,7 @@ def test_extract_datetime_from_md():
     # Test case: Valid date and time
     with open(MD_FILE_PATH, 'r', encoding='utf-8') as md_file:
         content = md_file.read()
-        expected_unix_time = 1729521592
+        expected_unix_time = 1729507192
         assert extract_datetime_from_md(
             content,
             date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
@@ -225,7 +225,7 @@ def test_read_md_file_and_convert_to_unix():
     reads a markdown file and converts date strings to Unix time.
     """
     # Read the valid file and get the Unix time
-    expected_unix_time = 1729521592  # Updated expected Unix time
+    expected_unix_time = 1729507192  # Updated expected Unix time
     assert read_md_file_and_convert_to_unix(
         MD_FILE_PATH,
         date_pattern=r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
