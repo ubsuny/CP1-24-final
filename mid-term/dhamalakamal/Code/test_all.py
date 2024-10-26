@@ -18,7 +18,13 @@ Functions:
 Test Cases:
     - Test conversion from yards to meters.
     - Test conversion from miles to meters.
-    - Test that an invalid unit raises a ValueError.
+    - Test load gps data.
+    - Test Haversine function
+    - Test calculate_distances
+    - Test calculate_direction
+    - Test calculate_directions_from_csv
+    - Test extract_datetime_from_md
+    - Test read_md_file_and_convert_to_unix
 
 """
 from io import StringIO
@@ -32,8 +38,8 @@ from acceleration_calculate import calculate_direction, calculate_directions_fro
 from unix_time import extract_datetime_from_md, read_md_file_and_convert_to_unix
 
 # Define the path to the existing Markdown file in the Data folder
-DATA_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'Data')  # Adjust the path as necessary
-MD_FILE_PATH = os.path.join(DATA_FOLDER, 'KD_acceleration.md')  
+DATA_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'Data')
+MD_FILE_PATH = os.path.join(DATA_FOLDER, 'KD_acceleration.md')
 
 
 # Testing feet to meter conversion
@@ -111,10 +117,10 @@ def test_calculate_distances(monkeypatch):
 
     # Define a mock haversine function that returns predefined distances
     def mock_haversine(lat1, lon1, lat2, lon2):
+        dist_val = 393000
         if (lat1, lon1, lat2, lon2) == (34.052235, -118.243683, 36.169941, -115.139832):
-            return 367000  # Distance between LA and Vegas (approx.)
-        elif (lat1, lon1, lat2, lon2) == (36.169941, -115.139832, 40.712776, -74.005974):
-            return 393000  # Distance between Vegas and NY (approx.)
+            dist_val = 367000  # Distance between LA and Vegas (approx.)
+        return dist_val
 
     # Use monkeypatch to replace the haversine function in the gps_module
     monkeypatch.setattr("distance_calculator.haversine", mock_haversine)
