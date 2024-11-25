@@ -3,23 +3,23 @@
 This is the final project for CP1-24 based on getting and using research data using the phyphox app (https://phyphox.org).
 The final is based on the midterm project.
 
-As a first step all content from YOUR midterm project has to be merged into the final repository while preserving all commit history (5 points).
+As a first step all content from YOUR midterm project has to be merged into the final repository while preserving all commit history (4 points).
 
 *Data task: (4 points)*
-- Use the Location (GPS) app to record the spatial locations of how you move along the outline of a sine wave together with a markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL008_sinewalk.md`) which includes the following inforamtion:
+- Use the Location (GPS) app to record the spatial locations of how you move along the outline of a sine wave together with a markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL008_sinewalk.md`) which includes the following information:
    - Date and time of the experiment
    - Envirnment temperature
    - Any additional information regarding the experiment
  
 Repeat this 20 times keeping the periodic parameters the same and record each time one csv and one markdown file.
 
-*Algorithm  task: (28 points):*
+*Algorithm  task: (24 points):*
 - write ONE python module that implements importable functions including docstrings and pytest unit tests (seperate file starting with `test_`) for all functions:
    - function that converts Fahrenheit to Kelvin (3)
    - parser that reads out the temperature of one markdown file (4)
    - filename lister that generates programmatically (using the python `os` library) a list of your markdown file based on a filename filter (eg filename contains `experimentname` (4)
-   - non-linear fitting in pure python which includes the functionality to specify the step number of $2^n$ (6)
-   - numpy wrapper for fft, inverse fft, including functionality that checks for non-equidistant data (6)
+   - non-linear fitting in pure python which includes the functionality to specify the step number of $2^n$ (5)
+   - numpy wrapper for fft, inverse fft, including functionality that checks for non-equidistant data (4)
    - pure python (no numpy) to calculate the frequency axis in useful units (4)
 - All python modules have to be linted using pylint (https://pylint.readthedocs.io/en/stable/) and get a full score using the default settings to get full points.
 - Only python libraries listed in requirements.txt can be used
