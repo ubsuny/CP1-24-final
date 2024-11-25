@@ -8,7 +8,7 @@ As a first step all content from YOUR midterm project has to be merged into the 
 *Data task: (4 points)*
 - Use the Location (GPS) app to record the spatial locations of how you move along the outline of a sine wave together with a markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL008_sinewalk.md`) which includes the following information:
    - Date and time of the experiment
-   - Envirnment temperature
+   - Environment temperature in Fahrenheit
    - Any additional information regarding the experiment
  
 Repeat this 20 times keeping the periodic parameters the same and record each time one csv and one markdown file.
