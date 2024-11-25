@@ -1,47 +1,45 @@
-# Midterm 24 - data read and process
+# Final 24 - data anlysis and presentation
 
-This is the midterm for CP1-24 based on getting and using research data using the phyphox app (https://phyphox.org).
+This is the final project for CP1-24 based on getting and using research data using the phyphox app (https://phyphox.org).
+The final is based on the midterm project.
 
-*Data task: 9 points*
-- Use the Location (GPS) app to record the spatial locations of how you move along the outline of the  following two geometric elements:
-   - a circle with a diameter of at least $d = \frac{500\rm{ft}}{\pi}$
-   - a right triangle with at least $a = 80 \rm{ft}$ and $b = 50 \rm{yd}$
-- Use the Acceleration (without g) app to record the linear accelaration in $x,y,z$ for the following events:
-   - Take the elevator in any UB north campus building from the lowest to the top floor
-   - Take the elevator in any UB north campus building from the top to the lowest floor
-- After each experiment export all collected data as csv files and generate an additional markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL009_gps_circle_run09.md`) with the following meta information:
+As a first step all content from YOUR midterm project has to be merged into the final repository while preserving all commit history (5 points).
+
+*Data task: (4 points)*
+- Use the Location (GPS) app to record the spatial locations of how you move along the outline of a sine wave together with a markdown file (named following this pattern: `"unique id"_"experiment name".md`, e.g. `LL008_sinewalk.md`) which includes the following inforamtion:
    - Date and time of the experiment
-   - Current weather conditions
+   - Envirnment temperature
    - Any additional information regarding the experiment
+ 
+Repeat this 20 times keeping the periodic parameters the same and record each time one csv and one markdown file.
 
-*Algorithm  task: (15 points):*
-- write the following python modules that implement importable functions:
-   - for a unit converter for feet and yard to an SI equivalent (2p)
-   - that calculate the distance between two adjacent GPS positions (from the recorded data from the data task) (bonus point if you consider the earth not being flat) (5p)
-   - that calculate the direction of motion from the recorded acceleration data (from the data task) (5p)
-   - to read out the data and time from each metafile and convert it into unix time (https://en.wikipedia.org/wiki/Unix_time) (3p)
+*Algorithm  task: (28 points):*
+- write ONE python module that implements importable functions including docstrings and pytest unit tests (seperate file starting with `test_`) for all functions:
+   - function that converts Fahrenheit to Kelvin (3)
+   - parser that reads out the temperature of one markdown file (4)
+   - filename lister that generates programmatically (using the python `os` library) a list of your markdown file based on a filename filter (eg filename contains `experimentname` (4)
+   - non-linear fitting in pure python which includes the functionality to specify the step number of $2^n$ (6)
+   - numpy wrapper for fft, inverse fft, including functionality that checks for non-equidistant data (6)
+   - pure python (no numpy) to calculate the frequency axis in useful units (4)
 - All python modules have to be linted using pylint (https://pylint.readthedocs.io/en/stable/) and get a full score using the default settings to get full points.
 - Only python libraries listed in requirements.txt can be used
 
-*Documentation task: (12 points):*
-- Generate docstrings for your modules and functions (4 points).
-- Generate *one* figure of your GPS motions in a x,y plane and save it as a png file (2 points)
-- Generate *one* figure of your directions in the elevator over time and save it as a png file (2 points)
-- Describe in a seperate markdown file how to run your code (4 points).
-
-*Tools task: (6 points):*
-- Write unit tests using the pytest framework for all modules. Tests have to be in a seperate file following the pattern `test_*.py` (4 points).
-- Add a bibliography in your documentation and references to all sources you used (2 points).
+*Documentation task: (10 points):*
+Generate one jupyter notebook that includes the following functionality:
+- In the first markdown cell describe how to run your code and a bibliography to all sources you used (3 points).
+- Generate *one* figure of your GPS motion with the axis in meter and the origin at your starting point, including a non-linear fit using your own function for each of the 20 repetitions (3 points).
+- Generate *one* figure with the FFT of each of your walks with the frequency in the unit of 1/100m (2 points).
+- Generate *one* figure that shows the inverse FFT of the filtered mean value of your sine walk frequency (2 points).
 
 ## How to work on your midterm project on github
 
-1. you have to work on a fork of the original ubsuny project
-2. you have to submit your work to the original ubsuny project via a *single* pull request
+1. you have to work on a fork of the original ubsuny *final* project
+2. you have to submit your work to the original ubsuny *final* project via a *single* pull request
 3. all your work has to be in a folder that is called "your github username"
 4. inside that folder you have to seperate you work in several subfolders:
      - data
      - code
-     - documentation (contains figures and how to run the code)
+     - documentation (contains jupyter and figures)
 
 
 
