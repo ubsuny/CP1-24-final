@@ -14,7 +14,7 @@ As a first step all content from YOUR midterm project has to be merged into the 
 Repeat this 20 times keeping the periodic parameters the same and record each time one csv and one markdown file.
 
 *Algorithm  task: (24 points):*
-- write ONE python module that implements importable functions including docstrings and pytest unit tests (seperate file starting with `test_`) for all functions:
+- write ONE python module named: `final.py` that implements importable functions including docstrings and pytest unit tests (seperate file starting with `test_final.py`) for all functions:
    - function that converts Fahrenheit to Kelvin (3)
    - parser that reads out the temperature of one markdown file (4)
    - filename lister that generates programmatically (using the python `os` library) a list of your markdown file based on a filename filter (eg filename contains `experimentname` (4)
@@ -25,13 +25,13 @@ Repeat this 20 times keeping the periodic parameters the same and record each ti
 - Only python libraries listed in requirements.txt can be used
 
 *Documentation task: (10 points):*
-Generate one jupyter notebook that includes the following functionality:
+Generate one jupyter notebook named: `final.ipynb` that includes the following functionality:
 - In the first markdown cell describe how to run your code and a bibliography to all sources you used (3 points).
 - Generate *one* figure of your GPS motion with the axis in meter and the origin at your starting point, including a non-linear fit using your own function for each of the 20 repetitions including a legend that includes the temperature in Kelvin for each run that was read out from the markdwon file with the functions from the Algorithm task (3 points).
 - Generate *one* figure with the FFT (using functions from the algo task) of each of your walks with the frequency in the unit of 1/100m (2 points).
 - Generate *one* figure that shows the inverse FFT of the filtered mean value of your sine walk frequency (2 points).
 
-## How to work on your midterm project on github
+## How to work on your final project on github
 
 1. you have to work on a fork of the original ubsuny *final* project
 2. you have to submit your work to the original ubsuny *final* project via a *single* pull request
