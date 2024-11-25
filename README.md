@@ -27,8 +27,8 @@ Repeat this 20 times keeping the periodic parameters the same and record each ti
 *Documentation task: (10 points):*
 Generate one jupyter notebook that includes the following functionality:
 - In the first markdown cell describe how to run your code and a bibliography to all sources you used (3 points).
-- Generate *one* figure of your GPS motion with the axis in meter and the origin at your starting point, including a non-linear fit using your own function for each of the 20 repetitions (3 points).
-- Generate *one* figure with the FFT of each of your walks with the frequency in the unit of 1/100m (2 points).
+- Generate *one* figure of your GPS motion with the axis in meter and the origin at your starting point, including a non-linear fit using your own function for each of the 20 repetitions including a legend that includes the temperature in Kelvin for each run that was read out from the markdwon file with the functions from the Algorithm task (3 points).
+- Generate *one* figure with the FFT (using functions from the algo task) of each of your walks with the frequency in the unit of 1/100m (2 points).
 - Generate *one* figure that shows the inverse FFT of the filtered mean value of your sine walk frequency (2 points).
 
 ## How to work on your midterm project on github
@@ -40,8 +40,6 @@ Generate one jupyter notebook that includes the following functionality:
      - data
      - code
      - documentation (contains jupyter and figures)
-
-
 
 ## License
 This midterm project is under GPLv3 license (see LICENSE file).
