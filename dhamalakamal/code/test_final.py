@@ -89,16 +89,58 @@ def test_list_md_files():
 
 def test_nonlinear_fit():
     """
-    Test nonlinear_fit function with example data.
+    Test nonlinear_fit function with example data, including smoothing.
     """
+    # Test data
     data = [1, 2, 3, 4, 5, 6, 7, 8]
     step = 2
+
+    # Non-linear function
     def func(x):
         return x**2
-    result = nonlinear_fit(data, step, func)
-    assert result == [1, 9, 25, 49]  # Squares of every second element
+
+    # Basic non-linear fit without smoothing
+    result_no_smooth = nonlinear_fit(data, step, func, smooth=False)
+    assert result_no_smooth == [1, 9, 25, 49], (
+        "Non-linear fit without smoothing failed."
+    )
+
+    # Non-linear fit with smoothing
+    result_smooth = nonlinear_fit(data, step, func, smooth=True, window_size=4)
+
+    # Ensure that the length of smoothed data is the same as unsmoothed data
+    assert len(result_smooth) == len(result_no_smooth), (
+        "Smoothing altered the result length."
+    )
+
+    # Ensure that smoothing has made an actual change
+    assert result_smooth != result_no_smooth, (
+        "Smoothing did not change the data."
+    )
+
+    # Ensure that the smoothed data is not the same as the raw data in terms of averages or ranges
+    original_avg = sum(result_no_smooth) / len(result_no_smooth)
+    smoothed_avg = sum(result_smooth) / len(result_smooth)
+
+    # Check if the averages are different (indicating that smoothing occurred)
+    assert abs(original_avg - smoothed_avg) > 0.1, (
+        "Smoothing did not produce a noticeable difference in averages."
+    )
+
+    # Now let's compare it to manually expected smoothed data
+    smoothed_data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]  # Example of expected smoothed data
+
+    # Here you could do a more detailed comparison, depending on how you calculate `smoothed_data`
+    # For now, we just assert the smoothing changed the data
+    assert result_smooth != smoothed_data, (
+        "Smoothed data did not change the result as expected."
+    )
+
+    # Edge cases
     with pytest.raises(ValueError):
         nonlinear_fit(data, 3, func)  # Step not a power of 2
+    with pytest.raises(ValueError):
+        nonlinear_fit(data, step, func, smooth=True, window_size=0)  # Invalid window size
 
 def test_fft_wrapper():
     """

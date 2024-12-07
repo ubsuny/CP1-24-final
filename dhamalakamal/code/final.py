@@ -95,21 +95,40 @@ def list_md_files(directory: str, filter_keyword: str) -> List[str]:
     ]
 
 # Non-linear fitting
-def nonlinear_fit(data: List[float], step: int, func: Callable[[float], float]) -> List[float]:
+def nonlinear_fit(
+        data: List[float],
+        step: int,
+        func: Callable[[float], float],
+        smooth: bool = False,
+        window_size: int = 5
+    ) -> List[float]:
     """
-    Applies a non-linear fitting function to data with a specific step size.
-
+    Applies a non-linear fitting function to data with optional smoothing.
+    
     Parameters:
-        data (List[float]): Input data points.
-        step (int): Step size, must be a power of 2.
-        func (Callable[[float], float]): Function to apply.
-
-    Returns:
-        List[float]: Processed data.
+        data: Input data points.
+        step: Step size, must be a power of 2.
+        func: Function to apply.
+        smooth: Whether to smooth the data using moving average. Default is False.
+        window_size: Window size for smoothing. Default is 5.
+    
+    Returns: Processed data.
     """
     if not (step > 0 and (step & (step - 1)) == 0):  # Power of 2 check
         raise ValueError("Step must be a power of 2.")
-    return [func(data[i]) for i in range(0, len(data), step)]
+
+    # Smooth data if enabled
+    if smooth:
+        if window_size < 1:
+            raise ValueError("Window size must be at least 1.")
+        # Apply moving average smoothing
+        data = np.convolve(data, np.ones(window_size) / window_size, mode="same").tolist()
+
+    # Apply non-linear fitting function
+    result = []
+    for i in range(0, len(data), step):
+        result.append(func(data[i]))
+    return result
 
 # Numpy Wrapper for FFT
 def fft_wrapper(data: np.ndarray) -> np.ndarray:
