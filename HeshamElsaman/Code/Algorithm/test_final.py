@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import final
 
+# Testing Temperature Conversion
 def test_fahrenheit_to_kelvin():
     """
     This functions tests for multiple cases for temperature conversion
@@ -22,6 +23,7 @@ def test_fahrenheit_to_kelvin():
     expected = 255.37222222222222
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
 
+# Testing Temperature Reading
 def test_read_temp():
     """
     Test the read_temp function with a valid file and an invalid format.
@@ -51,6 +53,38 @@ def test_read_temp():
     expected = 28
     assert temp == expected, f"Test failed: Expected {expected}, but got {temp}."
 
+#Testing Listing The Files
+def test_list_markdown_files(tmp_path):
+    """
+    Test the list_markdown_files function with a temporary directory.
+    """
+    # Set up a temporary directory with test files
+    markdown_files = ["experiment1.md", "experiment2.md", "notes.md"]
+    other_files = ["experiment1.txt", "readme.md", "experiment3.log"]
+    for file_name in markdown_files + other_files:
+        file_path = tmp_path / file_name
+        file_path.touch()  # Create the file
+    # Test case 1: Matching files
+    result = final.list_markdown_files(tmp_path, "experiment")
+    expected = ["experiment1.md", "experiment2.md"]
+    assert sorted(result) == sorted(expected), f"Test failed: Expected {expected}, but got {result}"
+    # Test case 2: No matching files
+    result = final.list_markdown_files(tmp_path, "nonexistent")
+    expected = []
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    # Test case 3: Empty directory
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    result = final.list_markdown_files(empty_dir, "experiment")
+    expected = []
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    #Test case 4: Actual directory
+    directory = "/workspaces/CP1-24-final/HeshamElsaman/Data/GPSSine/gs01_gps_sin"
+    expected = ["gs01_gps_sin.md"]
+    result = final.list_markdown_files(directory, "gps_sin")
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+
+# Testing FFT/IFFT
 def test_check_equidistant():
     """
     Test the check_equidistant function for equidistant and non-equidistant data.
