@@ -2,6 +2,8 @@
 This module is to test for the functions created in the final.py file
 """
 
+import pandas as pd
+import numpy as np
 import pytest
 import final
 
@@ -18,3 +20,47 @@ def test_fahrenheit_to_kelvin():
     result = final.fahrenheit_to_kelvin(0)
     expected = 255.37222222222222
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+
+def test_check_equidistant():
+    """
+    Test the check_equidistant function for equidistant and non-equidistant data.
+    """
+    # Equidistant data
+    df = pd.DataFrame({'x': np.linspace(0, 10, 100)})
+    assert final.check_equidistant(df, 'x'), "Test failed: Data wasn't recognized as equidistant."
+
+    # Non-equidistant data
+    df = pd.DataFrame({'x': [0, 1, 2, 4, 7]})
+    assert not final.check_equidistant(df, 'x'), "Test failed: It's not nonequidistant data."
+
+def test_fft():
+    """
+    Test the fft function for correct FFT computation with equidistant data.
+    """
+    # Equidistant data
+    df = pd.DataFrame({'x': np.linspace(0, 10, 100), 'y': np.sin(np.linspace(0, 10, 100))})
+    result = final.fft(df, 'x', 'y')
+    assert isinstance(result, pd.Series), "Test failed: FFT did not return a pandas Series."
+    assert len(result) == len(df), "Test failed: FFT result length does not match input data."
+
+    # Non-equidistant data
+    df = pd.DataFrame({'x': [0, 1, 2, 4, 7], 'y': [0, 1, 0, -1, 0]})
+    with pytest.raises(ValueError, match="Column 'x' contains non-equidistant data."):
+        final.fft(df, 'x', 'y')
+
+def test_inv_fft():
+    """
+    Test the inv_fft function for correct inverse FFT computation.
+    """
+    # Equidistant data
+    df = pd.DataFrame({'x': np.linspace(0, 10, 100), 'y': np.sin(np.linspace(0, 10, 100))})
+    y_fft = final.fft(df, 'x', 'y')
+    result = final.inv_fft(df, 'x', y_fft)
+    assert isinstance(result, pd.Series), "Test failed: Inverse FFT did not return a pandas Series."
+    assert len(result) == len(df), "Test failed: Inverse FFT result length does not match the data."
+    assert np.allclose(df['y'], np.real(result)), "Test failed: Original data wasn't reconstructed."
+
+    # Non-equidistant data
+    df = pd.DataFrame({'x': [0, 1, 2, 4, 7], 'y': [0, 1, 0, -1, 0]})
+    with pytest.raises(ValueError, match = "Column 'x' contains non-equidistant data."):
+        final.inv_fft(df, 'x', y_fft)
