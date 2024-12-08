@@ -2,6 +2,7 @@
 This module is to test for the functions created in the final.py file
 """
 
+import tempfile
 import pandas as pd
 import numpy as np
 import pytest
@@ -20,6 +21,35 @@ def test_fahrenheit_to_kelvin():
     result = final.fahrenheit_to_kelvin(0)
     expected = 255.37222222222222
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+
+def test_read_temp():
+    """
+    Test the read_temp function with a valid file and an invalid format.
+    """
+    # Test case 1: Valid file
+    valid_content = "Temperature (F): 28\nDate: 12-5-2024\nTime: 15:40:48.266\n"
+    with tempfile.NamedTemporaryFile(mode="w+", delete=True) as temp_file:
+        temp_file.write(valid_content)
+        temp_file.seek(0)  # Reset file pointer to the beginning
+        result = final.read_temp(temp_file.name)
+        expected = 28.0
+        assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    # Test case 2: Invalid file format (missing temperature line)
+    invalid_content = "Date: 12-5-2024\nTime: 15:40:48.266\n"
+    with tempfile.NamedTemporaryFile(mode="w+", delete=True) as temp_file:
+        temp_file.write(invalid_content)
+        temp_file.seek(0)  # Reset file pointer to the beginning
+        with pytest.raises(ValueError, match="could not convert string to float"):
+            final.read_temp(temp_file.name)
+    # Test case 3: Empty file
+    with tempfile.NamedTemporaryFile(mode="w+", delete=True) as temp_file:
+        with pytest.raises(IndexError):
+            final.read_temp(temp_file.name)
+    # Test case 4: Actual file
+    fpath = "/workspaces/CP1-24-final/HeshamElsaman/Data/GPSSine/gs01_gps_sin/gs01_gps_sin.md"
+    temp = final.read_temp(fpath)
+    expected = 28
+    assert temp == expected, f"Test failed: Expected {expected}, but got {temp}."
 
 def test_check_equidistant():
     """

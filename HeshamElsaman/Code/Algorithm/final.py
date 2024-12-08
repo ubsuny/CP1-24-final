@@ -19,6 +19,22 @@ def fahrenheit_to_kelvin(fahrenheit):
     """
     return (fahrenheit - 32) * 5/9 + 273.15
 
+# Reading the Temperatures
+def read_temp(fpath):
+    """
+    A function that reads out the temperature of a single file
+
+    Parameters:
+    Inputs:
+        fpath (string): The path of the file to read the temperature from
+    Outputs:
+        temp (number): The temperature read from the file in Fahrenheits
+    """
+    with open(fpath, 'r', encoding='utf-8') as file:
+        content = file.readlines()
+        temp = float(content[0].split(":")[1].strip())
+    return temp
+
 # FFT Wrapper
 def check_equidistant(data, x_col):
     """
