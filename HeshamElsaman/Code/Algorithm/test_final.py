@@ -84,6 +84,21 @@ def test_list_markdown_files(tmp_path):
     result = final.list_markdown_files(directory, "gps_sin")
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
 
+# Testing the Non-linear Fitting
+def test_fit_sinusoidal():
+    """
+    Testing the Non-linear Fitting function
+    """
+    # Test case: simple sine wave
+    x_data = [0, 1, 2, 3, 4, 5, 6]
+    y_data = [0, 0.8415, 0.9093, 0.1411, -0.7568, -0.9589, -0.2794]
+    initial_guess = (1, 1, 0)
+    steps = 64
+    result = final.fit_sinusoidal(x_data, y_data, steps, initial_guess)
+    expected = (1, 1, 0)
+    errmsg = f"Test failed: Expected {expected}, got {result}"
+    assert pytest.approx(result, rel=1e-512) == expected, errmsg
+
 # Testing FFT/IFFT
 def test_check_equidistant():
     """

@@ -3,6 +3,7 @@ This module is to provide all the needed functionality for the final exam of CP1
 """
 
 import os
+import math
 import numpy as np
 import pandas as pd
 
@@ -61,6 +62,46 @@ def list_markdown_files(directory, fltr):
         raise FileNotFoundError(f"The directory {directory} does not exist.") from e
     except Exception as e:
         raise RuntimeError(f"An unexpected error occurred: {e}") from e
+
+# Non-linear Fitting
+def model(x, a, b, c):
+    """ Defines the model to be fitted """
+    return a * math.sin(b * x + c)
+
+def residuals(x_data, y_data, params):
+    """ Calculates the residuals for the fit """
+    a, b, c = params
+    return [y - model(x, a, b, c) for x, y in zip(x_data, y_data)]
+
+def fit_sinusoidal(x_data, y_data, steps, initial_guess):
+    """
+    Perform non-linear fitting for a sinusoidal function y = A * sin(B * x + C).
+
+    Parameters:
+        x_data (list): List of x values (independent variable).
+        y_data (list): List of y values (dependent variable).
+        steps (number): Step number (to be in the form of 2^n).
+        initial_guess (tuple): Initial guesses for A, B, and C (amplitude, frequency, phase).
+
+    Returns:
+        tuple: Fitted parameters (A, B, C).
+    """
+    # Parameters and step size
+    a, b, c = initial_guess
+    step_size = 1 / (2 ** steps)
+    for _ in range(100):  # Iterate for convergence
+        res = residuals(x_data, y_data, (a, b, c))
+        grad_a = -2 * sum(r * math.sin(b * x + c) for r, x in zip(res, x_data))
+        grad_b = -2 * sum(r * a * x * math.cos(b * x + c) for r, x in zip(res, x_data))
+        grad_c = -2 * sum(r * a * math.cos(b * x + c) for r, x in zip(res, x_data))
+        # Update parameters using gradient descent
+        a -= step_size * grad_a
+        b -= step_size * grad_b
+        c -= step_size * grad_c
+        # Check for convergence
+        if max(abs(grad_a), abs(grad_b), abs(grad_c)) < 1e-6:
+            break
+    return a, b, c
 
 # FFT Wrapper
 def check_equidistant(data, x_col):
