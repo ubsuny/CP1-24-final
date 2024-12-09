@@ -2,10 +2,9 @@
 
 import os
 import re
-from datetime import datetime
+from typing import Tuple
 from scipy.optimize import curve_fit
 import numpy as np
-
 
 def fahrenheit_to_kelvin(fahrenheit):
     """
@@ -72,25 +71,29 @@ def sine_function(x, amplitude, frequency, phase, offset):
     """
     return amplitude * np.sin(frequency * x + phase) + offset
 
-
-def non_linear_fit(x_data, y_data, initial_guess, steps=1000):
+def non_linear_fit(
+    x_data: np.ndarray, y_data: np.ndarray, initial_guess: Tuple[float, ...], steps: int = 1000
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Perform non-linear fitting using curve_fit from SciPy.
+    Perform non-linear fitting using SciPy's curve_fit.
+
+    This function fits a sine wave model to the provided data.
 
     Parameters:
-    x_data (array): x-axis data.
-    y_data (array): y-axis data.
-    initial_guess (tuple): Initial guess for parameters.
-    steps (int): Number of steps for fitting.
+    x_data (np.ndarray): x-axis data.
+    y_data (np.ndarray): y-axis data.
+    initial_guess (Tuple[float, ...]): Initial guess for fitting parameters.
+    steps (int, optional): Maximum number of fitting steps (default is 1000).
 
     Returns:
-    tuple: Optimal parameters and covariance.
+    Tuple[np.ndarray, np.ndarray]: Optimal parameters and covariance matrix.
     """
-    popt, pcov = curve_fit(
-        sine_function, x_data, y_data, p0=initial_guess, maxfev=steps
-    )
-    return popt, pcov
+    # Disable Pylint unbalanced-tuple-unpacking warning
+    # pylint: disable=unbalanced-tuple-unpacking
+    popt, pcov = curve_fit(sine_function, x_data, y_data, p0=initial_guess, maxfev=steps)
+    # pylint: enable=unbalanced-tuple-unpacking
 
+    return popt, pcov
 
 def fft_with_check(x_data, y_data):
     """
