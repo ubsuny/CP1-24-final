@@ -3,7 +3,6 @@
 import tempfile
 from jkblc.code.final import parse_temperature_from_markdown
 
-
 def test_parse_temperature_from_markdown():
     """
     Test the temperature parsing function from a markdown file.
@@ -23,7 +22,8 @@ def test_parse_temperature_from_markdown():
             - **Experimenter ID:** LL008
 
             ## Experiment Details
-            This experiment involved walking along a sine wave pattern while recording GPS data using the Phyphox app.
+            This experiment involved walking along a sine wave pattern while
+              recording GPS data using the Phyphox app.
             """
         )
         temp_file_path = temp_file.name
