@@ -110,3 +110,21 @@ def inv_fft(data, x_col, y_fft):
     if not check_equidistant(data, x_col):
         raise ValueError(f"Column '{x_col}' contains non-equidistant data.")
     return pd.Series(np.fft.ifft(y_fft), index = data.index)
+
+# Calculating the Frequency Axis
+def calculate_frequency_axis(sample_rate, num_samples):
+    """
+    Calculates the frequency axis for a given sampling rate and number of samples.
+
+    Parameters:
+        sample_rate (number): The sampling rate in inverse unit (samples per unit).
+        num_samples (number): The total number of samples.
+
+    Returns:
+        list: Frequency axis in inverse units.
+    """
+    frequencies = []
+    for k in range(num_samples):
+        freq = k * sample_rate / num_samples
+        frequencies.append(freq)
+    return pd.Series(frequencies)

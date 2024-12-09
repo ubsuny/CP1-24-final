@@ -128,3 +128,27 @@ def test_inv_fft():
     df = pd.DataFrame({'x': [0, 1, 2, 4, 7], 'y': [0, 1, 0, -1, 0]})
     with pytest.raises(ValueError, match = "Column 'x' contains non-equidistant data."):
         final.inv_fft(df, 'x', y_fft)
+
+# Testing Calculating the Frequency Axis
+def test_calculate_frequency_axis():
+    """
+    Test the calculate_frequency_axis function.
+    """
+    # Test case 1: Small dataset
+    sample_rate = 2000
+    num_samples = 4
+    result = list(final.calculate_frequency_axis(sample_rate, num_samples))
+    expected = [0.0, 500.0, 1000.0, 1500.0]
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    # Test case 2: Larger dataset
+    sample_rate = 1000
+    num_samples = 8
+    result = list(final.calculate_frequency_axis(sample_rate, num_samples))
+    expected = [0.0, 125.0, 250.0, 375.0, 500.0, 625.0, 750.0, 875.0]
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    # Test case 3: Edge case with 1 sample
+    sample_rate = 500
+    num_samples = 1
+    result = list(final.calculate_frequency_axis(sample_rate, num_samples))
+    expected = [0.0]
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
