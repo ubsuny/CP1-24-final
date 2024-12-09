@@ -13,5 +13,3 @@ Explanation of Functions
     Unix Time Conversion Functions:
         convert_to_unix_time(date_string, date_format): Converts a date string to Unix time.
         read_metafile_and_extract_unix(file_path): Reads timestamps from a file and returns them in Unix time.
-
-The Python modules contain all the requested algorithms. It appears that the modules need to be implemented and unit tests have to be written using the pytest framework, with no explicit requirement to test specific external data directly.
