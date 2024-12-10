@@ -1,6 +1,16 @@
+"""
+This module contains functions for the CP1-24 final project, including:
+- Temperature conversion (Fahrenheit to Kelvin)
+- Parsing temperature from markdown
+- Listing markdown files
+- Non-linear sine wave fitting
+- FFT wrapper and frequency axis calculations
+"""
+
 import os
 import re
 from math import sin, pi
+import numpy as np
 
 
 def fahrenheit_to_kelvin(temp_f):
@@ -26,7 +36,7 @@ def parse_temperature_from_markdown(file_path):
     Returns:
         float: Temperature in Fahrenheit.
     """
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:  # Specify encoding
         for line in file:
             if "Temperature (Outdoor):" in line:
                 match = re.search(r"(\d+)", line)
@@ -65,19 +75,16 @@ def sine_wave(x, amplitude, frequency, phase):
     return amplitude * sin(2 * pi * frequency * x + phase)
 
 
-def fft_with_check(data, sampling_interval):
+def fft_with_check(data):
     """
     Computes the FFT and checks for non-equidistant data.
 
     Args:
         data (list of float): Time series data.
-        sampling_interval (float): Sampling interval.
 
     Returns:
         list: FFT result.
     """
-    import numpy as np
-
     # Check if data is equidistant
     intervals = [data[i + 1] - data[i] for i in range(len(data) - 1)]
     if not all(abs(interval - intervals[0]) < 1e-6 for interval in intervals):

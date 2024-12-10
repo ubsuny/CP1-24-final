@@ -1,5 +1,8 @@
+"""
+Unit tests for the functions in final.py.
+"""
+
 import pytest
-import os
 from final import (
     fahrenheit_to_kelvin,
     parse_temperature_from_markdown,
@@ -11,11 +14,17 @@ from final import (
 
 
 def test_fahrenheit_to_kelvin():
+    """
+    Test the fahrenheit_to_kelvin function for correct conversions.
+    """
     assert fahrenheit_to_kelvin(32) == 273.15
     assert fahrenheit_to_kelvin(212) == pytest.approx(373.15, 0.01)
 
 
 def test_parse_temperature_from_markdown(tmp_path):
+    """
+    Test the parse_temperature_from_markdown function to extract temperature.
+    """
     markdown_content = """
     **Temperature (Outdoor):** 75°F
     """
@@ -25,26 +34,35 @@ def test_parse_temperature_from_markdown(tmp_path):
 
 
 def test_list_markdown_files(tmp_path):
+    """
+    Test the list_markdown_files function for correct filtering.
+    """
     (tmp_path / "file1_sinewalk.md").write_text("Test file")
     (tmp_path / "file2.md").write_text("Test file")
     assert list_markdown_files(tmp_path, "sinewalk") == ["file1_sinewalk.md"]
 
 
 def test_sine_wave():
+    """
+    Test the sine_wave function for correct sine wave computation.
+    """
     assert sine_wave(0, 1, 1, 0) == 0
     assert sine_wave(0.25, 1, 1, 0) == pytest.approx(1.0, 0.01)
 
 
 def test_fft_with_check():
-    import numpy as np
-
+    """
+    Test the fft_with_check function for correct FFT computation.
+    """
     data = [1, 2, 3, 4, 5]
-    sampling_interval = 1.0
-    result = fft_with_check(data, sampling_interval)
+    result = fft_with_check(data)
     assert len(result) == len(data)
 
 
 def test_calculate_frequency_axis():
+    """
+    Test the calculate_frequency_axis function for correct frequency axis calculation.
+    """
     assert calculate_frequency_axis(10, 0.1) == [
         0.0,
         1.0,
