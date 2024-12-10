@@ -4,6 +4,8 @@ import os
 from typing import Tuple
 import numpy as np
 
+
+# Temperature Conversion Function
 def fahrenheit_to_kelvin(fahrenheit):
     """
     Convert Fahrenheit to Kelvin.
@@ -16,6 +18,8 @@ def fahrenheit_to_kelvin(fahrenheit):
     """
     return (fahrenheit - 32) * 5 / 9 + 273.15
 
+
+# Markdown Temperature Parser
 def parse_temperature_from_markdown(file_path):
     """
     Extracts the environment temperature from a Markdown file.
@@ -32,12 +36,8 @@ def parse_temperature_from_markdown(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             for line in file:
-                # Look for the temperature line
                 if "Environment Temperature:" in line:
-                    # Clean the line of Markdown formatting symbols
                     clean_line = line.replace("*", "").replace("**", "").strip()
-
-                    # Extract the temperature value
                     temp_str = clean_line.split(":")[1].strip().replace("F", "").strip()
                     return float(temp_str)
     except (IndexError, ValueError):
@@ -45,6 +45,8 @@ def parse_temperature_from_markdown(file_path):
 
     raise ValueError(f"Temperature not found in file: {file_path}")
 
+
+# List Markdown Files
 def list_markdown_files(folder_path, keyword="sinewalk"):
     """
     List all markdown files containing a specific keyword.
@@ -62,6 +64,8 @@ def list_markdown_files(folder_path, keyword="sinewalk"):
         if f.endswith(".md") and keyword in f
     ]
 
+
+# Sine Wave Function for Fitting
 def sine_function(x, amplitude, frequency, phase, offset):
     """
     Sine wave function for non-linear fitting.
@@ -78,11 +82,13 @@ def sine_function(x, amplitude, frequency, phase, offset):
     """
     return amplitude * np.sin(frequency * x + phase) + offset
 
+
+# Custom Non-Linear Fitting Using Gradient Descent
 def non_linear_fit(
-    x_data: np.ndarray, y_data: np.ndarray, initial_guess: Tuple[float, ...], steps: int = 1000
+    x_data: np.ndarray, y_data: np.ndarray, initial_guess: Tuple[float, ...], steps: int = 10000, lr: float = 0.001
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Perform non-linear fitting using SciPy's curve_fit.
+    Perform non-linear fitting using custom gradient descent.
 
     This function fits a sine wave model to the provided data.
 
@@ -90,18 +96,32 @@ def non_linear_fit(
     x_data (np.ndarray): x-axis data.
     y_data (np.ndarray): y-axis data.
     initial_guess (Tuple[float, ...]): Initial guess for fitting parameters.
-    steps (int, optional): Maximum number of fitting steps (default is 1000).
+    steps (int, optional): Maximum number of fitting steps (default is 10000).
+    lr (float, optional): Learning rate for optimization.
 
     Returns:
-    Tuple[np.ndarray, np.ndarray]: Optimal parameters and covariance matrix.
+    Tuple[np.ndarray, np.ndarray]: Optimal parameters (amplitude, frequency, phase, offset).
     """
-    # Disable Pylint unbalanced-tuple-unpacking warning
-    # pylint: disable=unbalanced-tuple-unpacking
-    popt, pcov = curve_fit(sine_function, x_data, y_data, p0=initial_guess, maxfev=steps)
-    # pylint: enable=unbalanced-tuple-unpacking
+    amplitude, frequency, phase, offset = initial_guess
 
-    return popt, pcov
+    for _ in range(steps):
+        y_pred = sine_function(x_data, amplitude, frequency, phase, offset)
+        error = y_data - y_pred
 
+        grad_amplitude = -2 * np.sum(error * np.sin(frequency * x_data + phase))
+        grad_frequency = -2 * np.sum(error * amplitude * x_data * np.cos(frequency * x_data + phase))
+        grad_phase = -2 * np.sum(error * amplitude * np.cos(frequency * x_data + phase))
+        grad_offset = -2 * np.sum(error)
+
+        amplitude -= lr * grad_amplitude
+        frequency -= lr * grad_frequency
+        phase -= lr * grad_phase
+        offset -= lr * grad_offset
+
+    return amplitude, frequency, phase, offset
+
+
+# Perform FFT with Equidistant Data Check
 def fft_with_check(x_data, y_data):
     """
     Perform FFT with non-equidistant data checking.
@@ -122,6 +142,7 @@ def fft_with_check(x_data, y_data):
     return fft_y, freq
 
 
+# Perform Inverse FFT
 def inverse_fft(fft_y):
     """
     Perform inverse FFT.
@@ -135,6 +156,7 @@ def inverse_fft(fft_y):
     return np.fft.ifft(fft_y).real
 
 
+# Calculate Frequency Axis
 def calculate_frequency_axis(n_points, dx):
     """
     Calculate the frequency axis in units of 1/100m.
