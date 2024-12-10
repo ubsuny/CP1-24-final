@@ -21,21 +21,29 @@ def fahrenheit_to_kelvin(fahrenheit):
 def parse_temperature_from_markdown(file_path):
     """
     Extracts the environment temperature from a Markdown file.
-    """
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
-        print(content)
-        print("DEBUG: File Content Read:\n", content)  # Debug line
 
-        # Look for the temperature line
-        for line in content.splitlines():
-            if "Environment Temperature:" in line:
-                try:
-                    temp_str = line.split(":")[1].strip().replace("F", "").strip()
-                    print("DEBUG: Extracted Temperature String:", temp_str)  # Debug line
+    Parameters:
+    file_path (str): Path to the Markdown file.
+
+    Returns:
+    float: Extracted temperature in Fahrenheit.
+
+    Raises:
+    ValueError: If the temperature is not found or formatted incorrectly.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                # Look for the temperature line
+                if "Environment Temperature:" in line:
+                    # Clean the line of Markdown formatting symbols
+                    clean_line = line.replace("*", "").replace("**", "").strip()
+
+                    # Extract the temperature value
+                    temp_str = clean_line.split(":")[1].strip().replace("F", "").strip()
                     return float(temp_str)
-                except (IndexError, ValueError):
-                    raise ValueError(f"Invalid temperature format in file: {file_path}")
+    except (IndexError, ValueError):
+        raise ValueError(f"Invalid or missing temperature in file: {file_path}")
 
     raise ValueError(f"Temperature not found in file: {file_path}")
 
