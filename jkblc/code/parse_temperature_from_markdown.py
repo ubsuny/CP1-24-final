@@ -26,6 +26,6 @@ def parse_temperature_from_markdown(file_path):
                     if len(parts) >= 2:
                         temp_str = parts[1].strip().replace("F", "").strip()
                         return float(temp_str)
-                except ValueError:
-                    raise ValueError("Invalid temperature format.")
+                except ValueError as exc:
+                    raise ValueError("Invalid temperature format.") from exc
     raise ValueError("Temperature not found in file.")

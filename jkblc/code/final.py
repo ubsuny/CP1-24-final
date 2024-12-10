@@ -40,8 +40,8 @@ def parse_temperature_from_markdown(file_path):
                     clean_line = line.replace("*", "").replace("**", "").strip()
                     temp_str = clean_line.split(":")[1].strip().replace("F", "").strip()
                     return float(temp_str)
-    except (IndexError, ValueError):
-        raise ValueError(f"Invalid or missing temperature in file: {file_path}")
+    except (IndexError, ValueError) as exc:
+        raise ValueError(f"Invalid or missing temperature in file: {file_path}") from exc
 
     raise ValueError(f"Temperature not found in file: {file_path}")
 
@@ -85,7 +85,8 @@ def sine_function(x, amplitude, frequency, phase, offset):
 
 # Custom Non-Linear Fitting Using Gradient Descent
 def non_linear_fit(
-    x_data: np.ndarray, y_data: np.ndarray, initial_guess: Tuple[float, ...], steps: int = 10000, lr: float = 0.001
+    x_data: np.ndarray, y_data: np.ndarray,
+    initial_guess: Tuple[float, ...], steps: int = 10000, lr: float = 0.001
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Perform non-linear fitting using custom gradient descent.
@@ -109,7 +110,8 @@ def non_linear_fit(
         error = y_data - y_pred
 
         grad_amplitude = -2 * np.sum(error * np.sin(frequency * x_data + phase))
-        grad_frequency = -2 * np.sum(error * amplitude * x_data * np.cos(frequency * x_data + phase))
+        grad_frequency = -2 * np.sum(
+            error * amplitude * x_data * np.cos(frequency * x_data + phase))
         grad_phase = -2 * np.sum(error * amplitude * np.cos(frequency * x_data + phase))
         grad_offset = -2 * np.sum(error)
 
