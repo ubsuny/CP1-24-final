@@ -18,24 +18,26 @@ def fahrenheit_to_kelvin(fahrenheit):
     """
     return (fahrenheit - 32) * 5 / 9 + 273.15
 
-
 def parse_temperature_from_markdown(file_path):
     """
-    Extract the temperature in Fahrenheit from a markdown file.
-
-    Parameters:
-    file_path (str): Path to the markdown file.
-
-    Returns:
-    float: Temperature in Fahrenheit.
+    Extracts the environment temperature from a Markdown file.
     """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-        match = re.search(r"Environment temperature: (\d+\.?\d*) F", content)
-        if match:
-            return float(match.group(1))
-    raise ValueError("Temperature not found in file.")
+        print(content)
+        print("DEBUG: File Content Read:\n", content)  # Debug line
 
+        # Look for the temperature line
+        for line in content.splitlines():
+            if "Environment Temperature:" in line:
+                try:
+                    temp_str = line.split(":")[1].strip().replace("F", "").strip()
+                    print("DEBUG: Extracted Temperature String:", temp_str)  # Debug line
+                    return float(temp_str)
+                except (IndexError, ValueError):
+                    raise ValueError(f"Invalid temperature format in file: {file_path}")
+
+    raise ValueError(f"Temperature not found in file: {file_path}")
 
 def list_markdown_files(folder_path, keyword="sinewalk"):
     """
@@ -53,7 +55,6 @@ def list_markdown_files(folder_path, keyword="sinewalk"):
         for f in os.listdir(folder_path)
         if f.endswith(".md") and keyword in f
     ]
-
 
 def sine_function(x, amplitude, frequency, phase, offset):
     """
