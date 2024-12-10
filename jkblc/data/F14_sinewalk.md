@@ -2,15 +2,14 @@
 
 ## Metadata
 - **Experiment Name:** Sine Wave Walk
-- **Date and Time:** 2024-12-09 14:30:00
-- **Environment Temperature:** 75 F
-- **Experimenter ID:** LL008
+- **Date and Time:** 2024-12-09 19:45:25
+- **Environment Temperature:** 45 F
+- **Experimenter ID:** F14
 
 ## Experiment Details
 This experiment involved walking along a sine wave pattern while recording GPS data using the Phyphox app.
 
 ### Additional Information:
-- Environment: Outdoor, partly cloudy
+- Environment: Outdoor, Foggy
 - Walking Speed: Moderate
 - Equipment: Smartphone with Phyphox GPS tracker enabled
-- Observations: Some signal interference due to nearby trees.
