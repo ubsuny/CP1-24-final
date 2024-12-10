@@ -14,7 +14,7 @@ The project is designed for GPS-based experiment analysis using data collected f
 ## **Project Structure**  
 
 ```plaintext
-/your_github_username
+/jkblc
     ├── data                # Contains experiment data files (CSV + Markdown)
     ├── code
     │   ├── final.py        # Main code module
