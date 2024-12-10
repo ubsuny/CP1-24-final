@@ -1,9 +1,7 @@
 """Algorithms file"""
 
 import os
-import re
 from typing import Tuple
-from scipy.optimize import curve_fit
 import numpy as np
 
 def fahrenheit_to_kelvin(fahrenheit):
