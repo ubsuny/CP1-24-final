@@ -3,6 +3,7 @@ the Final Exam for Computational Physics 1, 2024.'''
 
 import os
 import numpy as np
+from scipy.optimize import curve_fit
 
 def fahrenheit_to_kelvin(fahrenheit):
     '''This function converts a given temperature in Degrees Fahrenheit 
@@ -33,7 +34,7 @@ def get_temp(path):
     return temp
 
 
-def list_files_with_string(directory, search_string, file_extension):
+def list_files(directory, search_string, file_extension):
     """
     Generates a list of file paths in a directory (and its subdirectories)
     where the filenames contain a specific string.
@@ -172,8 +173,8 @@ def curvefit(fitting_func, param_guess, xdata, ydata, yunc, learning_rate=1e-4, 
         # Check for convergence
         if np.linalg.norm(gradients) < tol:
             break
-    else:
-        raise ValueError("Error: Maximum iterations reached without convergence.")
+        else:
+            raise ValueError("Error: Maximum iterations reached without convergence.")
     
     # Estimate parameter uncertainties (approximation)
     J = np.zeros((n, p))  # Jacobian matrix
@@ -183,72 +184,119 @@ def curvefit(fitting_func, param_guess, xdata, ydata, yunc, learning_rate=1e-4, 
         params_perturbed[i] += delta
         J[:, i] = (fitting_func(xdata, *params_perturbed) - fitting_func(xdata, *params)) / delta
     
-    covariance_matrix = J.T @ np.diag(weights) @ J
+    covariance_matrix = np.linalg.inv(J.T @ np.diag(weights) @ J)
 
     sigma_args = np.sqrt(np.diag(covariance_matrix))
     
     return params, sigma_args
 
-class FFTWrapper:
+def is_equidistant(data):
     """
-    A wrapper class for performing FFT and IFFT operations with checks for equidistant data.
+    Check if the data points are equidistant.
+    
+    Parameters:
+        data (array-like): Array of data points (e.g., x-coordinates).
+    
+    Returns:
+        bool: True if data points are equidistant, False otherwise.
     """
+    diffs = np.diff(data)
+    return np.allclose(diffs, diffs[0])
 
-    @staticmethod
-    def is_equidistant(x):
-        """
-        Check if the data points in `x` are equidistant.
+def forward_fft(data):
+    """
+    Compute the Fast Fourier Transform (FFT) of the input data.
+    
+    Parameters:
+        data (array-like): The input data for the FFT.
+    
+    Returns:
+        array: The FFT of the input data.
+    """
+    return np.fft.fft(data)
 
-        Parameters:
-            x (array-like): The input array of x-values.
+def inverse_fft(data):
+    """
+    Compute the Inverse Fast Fourier Transform (IFFT) of the input data.
+    
+    Parameters:
+        data (array-like): The input data for the IFFT.
+    
+    Returns:
+        array: The IFFT of the input data.
+    """
+    return np.fft.ifft(data)
 
-        Returns:
-            bool: True if equidistant, False otherwise.
-        """
-        diffs = np.diff(x)
-        return np.allclose(diffs, diffs[0])
+def fft_with_check(data, x_coords=None):
+    """
+    Compute the FFT, but first check if the data points are equidistant.
+    
+    Parameters:
+        data (array-like): The input data for the FFT.
+        x_coords (array-like, optional): The x-coordinates of the data points.
+                                        If None, equidistant spacing is assumed.
+    
+    Returns:
+        array: The FFT of the input data.
+    
+    Raises:
+        ValueError: If the data points are not equidistant.
+    """
+    if x_coords is not None and not is_equidistant(x_coords):
+        raise ValueError("FFT requires equidistant data points.")
+    return forward_fft(data)
 
-    @staticmethod
-    def fft(y, x=None):
-        """
-        Perform the Fast Fourier Transform (FFT).
+def ifft_with_check(data, x_coords=None):
+    """
+    Compute the IFFT, but first check if the data points are equidistant.
+    
+    Parameters:
+        data (array-like): The input data for the IFFT.
+        x_coords (array-like, optional): The x-coordinates of the data points.
+                                         If None, equidistant spacing is assumed.
+    
+    Returns:
+        array: The IFFT of the input data.
+    
+    Raises:
+        ValueError: If the data points are not equidistant.
+    """
+    if x_coords is not None and not is_equidistant(x_coords):
+        raise ValueError("IFFT requires equidistant data points.")
+    return inverse_fft(data)
 
-        Parameters:
-            y (array-like): The values to transform.
-            x (array-like, optional): The corresponding x-values. If provided, checks for equidistance.
+#TEMPORARY
+def curvefit_wrapper(fitting_func, xdata, ydata, p0=None, yunc=None, bounds=(-np.inf, np.inf), return_cov=False):
+    """
+    A wrapper for scipy.optimize.curve_fit that adds uncertainty handling.
 
-        Returns:
-            tuple: (frequencies, fft_result)
+    Parameters:
+    - fitting_func (callable): The model function, f(x, *params), to fit.
+    - xdata (array-like): The independent variable data.
+    - ydata (array-like): The dependent variable data.
+    - p0 (array-like, optional): Initial guess for the parameters.
+    - yunc (array-like, optional): Standard deviation of ydata (used as weights in the fit).
+    - bounds (2-tuple of array-like, optional): Bounds on the parameters (default: no bounds).
+    - return_cov (bool, optional): If True, return the covariance matrix along with fit parameters (default: False).
 
-        Raises:
-            ValueError: If x is provided and the data is not equidistant.
-        """
-        y = np.array(y)
-        
-        if x is not None:
-            x = np.array(x)
-            if not FFTWrapper.is_equidistant(x):
-                raise ValueError("x-values are not equidistant. FFT requires equidistant sampling.")
+    Returns:
+    - popt (array): Optimized parameters.
+    - (optional) pcov (2D array): Covariance matrix of the parameters.
+    """
+    # Ensure data is numpy array
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
 
-            dx = x[1] - x[0]  # Sampling interval
-            n = len(x)
-            freqs = np.fft.fftfreq(n, d=dx)
-        else:
-            n = len(y)
-            freqs = np.fft.fftfreq(n)  # Assume unit sampling if x is not provided
+    if yunc is not None:
+        yunc = np.array(yunc)
 
-        fft_result = np.fft.fft(y)
-        return freqs, fft_result
+    # Perform the curve fitting
+    try:
+        popt, pcov = curve_fit(fitting_func, xdata, ydata, p0=p0, sigma=yunc, bounds=bounds, absolute_sigma=True)
+    except RuntimeError as e:
+        print(f"Error: Curve fitting did not converge. {e}")
+        return None
 
-    @staticmethod
-    def ifft(fft_result):
-        """
-        Perform the Inverse Fast Fourier Transform (IFFT).
-
-        Parameters:
-            fft_result (array-like): The FFT result to invert.
-
-        Returns:
-            array: The inverse-transformed values.
-        """
-        return np.fft.ifft(fft_result)
+    if return_cov:
+        return popt, pcov
+    return popt
