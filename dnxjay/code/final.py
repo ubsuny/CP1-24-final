@@ -1,7 +1,7 @@
 """
 This module contains functions for the CP1-24 final project, including:
 - Temperature conversion (Fahrenheit to Kelvin)
-- Parsing temperature from markdown
+- Parsing temperature from markdown files
 - Listing markdown files
 - Non-linear sine wave fitting
 - FFT wrapper and frequency axis calculations
@@ -9,8 +9,9 @@ This module contains functions for the CP1-24 final project, including:
 
 import os
 import re
-from math import sin, pi
 import numpy as np
+from math import sin, pi
+from scipy.interpolate import interp1d
 
 
 def fahrenheit_to_kelvin(temp_f):
@@ -61,35 +62,39 @@ def list_markdown_files(directory, keyword="sinewalk"):
 
 def sine_wave(x, amplitude, frequency, phase):
     """
-    Computes a sine wave value at a given x.
-    
+    Computes a sine wave value for an array-like input x.
+
     Args:
-        x (float): Input value.
+        x (array-like): Input values (e.g., time or spatial coordinates).
         amplitude (float): Amplitude of the sine wave.
         frequency (float): Frequency of the sine wave.
         phase (float): Phase shift of the sine wave.
 
     Returns:
-        float: Computed sine wave value.
+        numpy.ndarray: Computed sine wave values for the input.
     """
-    return amplitude * sin(2 * pi * frequency * x + phase)
+    return amplitude * np.sin(2 * np.pi * frequency * x + phase)
 
 
 def fft_with_check(data):
     """
-    Computes the FFT and checks for non-equidistant data.
+    Computes the FFT and resamples data if necessary to ensure equidistant intervals.
 
     Args:
-        data (list of float): Time series data.
+        data (array-like): Input data.
 
     Returns:
-        list: FFT result.
+        numpy.ndarray: FFT result.
     """
-    # Check if data is equidistant
-    intervals = [data[i + 1] - data[i] for i in range(len(data) - 1)]
-    if not all(abs(interval - intervals[0]) < 1e-6 for interval in intervals):
-        raise ValueError("Data is not equidistant.")
-
+    # Check intervals
+    intervals = np.diff(data)
+    if not np.allclose(intervals, intervals[0]):
+        # Resample the data to make it equidistant
+        original_x = np.arange(len(data))
+        new_x = np.linspace(original_x[0], original_x[-1], len(original_x))
+        interpolator = interp1d(original_x, data, kind='linear')
+        data = interpolator(new_x)
+    
     return np.fft.fft(data)
 
 
@@ -102,6 +107,6 @@ def calculate_frequency_axis(data_length, sampling_interval):
         sampling_interval (float): Sampling interval.
 
     Returns:
-        list: Frequency axis values.
+        numpy.ndarray: Frequency axis values.
     """
-    return [(i / (data_length * sampling_interval)) for i in range(data_length // 2)]
+    return np.fft.fftfreq(data_length, d=sampling_interval)[:data_length // 2]
