@@ -27,23 +27,20 @@ def fahrenheit_to_kelvin(temp_f):
     return (temp_f - 32) * 5 / 9 + 273.15
 
 
-def parse_temperature_from_markdown(file_path):
+def parse_temperature_from_markdown(filepath):
     """
-    Parses the temperature (Fahrenheit) from a markdown file.
-
-    Args:
-        file_path (str): Path to the markdown file.
-
-    Returns:
-        float: Temperature in Fahrenheit.
+    Parses the temperature (in Fahrenheit) from a markdown file.
     """
-    with open(file_path, "r", encoding="utf-8") as file:  # Specify encoding
-        for line in file:
-            if "Temperature (Outdoor):" in line:
-                match = re.search(r"(\d+)", line)
-                if match:
-                    return float(match.group(1))
-    raise ValueError("Temperature not found in the markdown file.")
+    import re
+    with open(filepath, 'r') as file:
+        content = file.read()
+    # Match the exact pattern for temperature
+    match = re.search(r"\*\*Temperature \(°F\):\*\* (\d+)", content)
+    if match:
+        return float(match.group(1))  # Convert matched value to float
+    else:
+        raise ValueError("Temperature not found in the markdown file.")
+
 
 
 def list_markdown_files(directory, keyword="sinewalk"):

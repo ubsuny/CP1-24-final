@@ -1,28 +1,4 @@
-Time (s),Latitude (°),Longitude (°),Altitude (m),Altitude WGS84 (m),Speed (m/s),Direction (°),Distance (km),Horizontal Accuracy (m),Vertical Accuracy (m),Satellites
-7.67E-03,4.30E+01,-7.88E+01,2.11E+02,1.76E+02,0.00E+00,NaN,1.18E-01,6.46E+00,4.00E+00,-1.00E+00
-4.74E-02,4.30E+01,-7.88E+01,2.07E+02,1.72E+02,NaN,NaN,2.46E-01,9.63E+02,3.00E+00,-1.00E+00
-5.92E-01,4.30E+01,-7.88E+01,2.07E+02,1.72E+02,NaN,NaN,2.46E-01,2.80E+01,3.00E+00,-1.00E+00
-6.07E-01,4.30E+01,-7.88E+01,2.07E+02,1.72E+02,NaN,NaN,2.62E-01,2.80E+01,3.00E+00,-1.00E+00
-2.59E+00,4.30E+01,-7.88E+01,2.05E+02,1.70E+02,NaN,NaN,2.78E-01,6.78E+01,9.60E+01,-1.00E+00
-3.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.75E+02,NaN,NaN,2.88E-01,4.99E+01,4.80E+01,-1.00E+00
-4.59E+00,4.30E+01,-7.88E+01,1.97E+02,1.62E+02,0.00E+00,NaN,3.02E-01,4.07E+01,3.20E+01,-1.00E+00
-5.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.19E-01,3.23E+01,4.00E+00,-1.00E+00
-6.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.25E-01,3.09E+01,4.00E+00,-1.00E+00
-7.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.33E-01,2.53E+01,4.00E+00,-1.00E+00
-8.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.36E-01,1.78E+01,4.00E+00,-1.00E+00
-9.59E+00,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.42E-01,1.40E+01,4.00E+00,-1.00E+00
-1.06E+01,4.30E+01,-7.88E+01,2.08E+02,1.74E+02,0.00E+00,NaN,3.45E-01,1.40E+01,4.00E+00,-1.00E+00
-1.16E+01,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.46E-01,1.40E+01,4.00E+00,-1.00E+00
-1.26E+01,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.52E-01,1.40E+01,4.00E+00,-1.00E+00
-1.36E+01,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,3.60E-01,1.31E+01,4.00E+00,-1.00E+00
-1.46E+01,4.30E+01,-7.88E+01,2.09E+02,1.74E+02,0.00E+00,NaN,,6.33E+00,4.00E+00,-1.00E+00
-
-
-# Sine Wave Walk Experiment - Trial 2
-
-**Date:** Friday, December 6th, 2024  
-**Time:** 04:39 PM  
-**Temperature (Outdoor):** 21°F  
-**Temperature (Indoor):** 75°F  
-**Notes:** The experiment was conducted in an indoor gym where tape was used to map out the sine wave path.  
-**Associated CSV File:** Trial_02_sinewalk.csv  
+# Trial 02: Sinewalk Experiment
+**Date and Time:** December 6, 2024, 4:39 PM  
+**Temperature (°F):** 75  
+**Additional Information:** The experiment was conducted indoors in a gym, where tape was used to map out the sine wave path.
