@@ -10,7 +10,6 @@ This module contains functions for the CP1-24 final project, including:
 import os
 import re
 import numpy as np
-from math import sin, pi
 from scipy.interpolate import interp1d
 
 
@@ -31,16 +30,13 @@ def parse_temperature_from_markdown(filepath):
     """
     Parses the temperature (in Fahrenheit) from a markdown file.
     """
-    import re
-    with open(filepath, 'r') as file:
+    with open(filepath, 'r', encoding='utf-8') as file:
         content = file.read()
-    # Match the exact pattern for temperature
-    match = re.search(r"\*\*Temperature \(°F\):\*\* (\d+)", content)
+    # Match various formats of temperature
+    match = re.search(r"\*\*Temperature.*?\*\*.*?(\d+)", content)
     if match:
         return float(match.group(1))  # Convert matched value to float
-    else:
-        raise ValueError("Temperature not found in the markdown file.")
-
+    raise ValueError("Temperature not found in the markdown file.")
 
 
 def list_markdown_files(directory, keyword="sinewalk"):
@@ -91,7 +87,6 @@ def fft_with_check(data):
         new_x = np.linspace(original_x[0], original_x[-1], len(original_x))
         interpolator = interp1d(original_x, data, kind='linear')
         data = interpolator(new_x)
-    
     return np.fft.fft(data)
 
 

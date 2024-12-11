@@ -1,7 +1,7 @@
 """
 Unit tests for the functions in final.py.
 """
-
+import numpy as np
 import pytest
 from final import (
     fahrenheit_to_kelvin,
@@ -26,10 +26,17 @@ def test_parse_temperature_from_markdown(tmp_path):
     Test the parse_temperature_from_markdown function to extract temperature.
     """
     markdown_content = """
-    **Temperature (Outdoor):** 75°F
+    **Temperature (°F):** 75
     """
     file_path = tmp_path / "test.md"
     file_path.write_text(markdown_content)
+    assert parse_temperature_from_markdown(file_path) == 75.0
+
+    # Test with different formats
+    markdown_content_outdoor = """
+    **Temperature (Outdoor):** 75°F
+    """
+    file_path.write_text(markdown_content_outdoor)
     assert parse_temperature_from_markdown(file_path) == 75.0
 
 
@@ -63,10 +70,6 @@ def test_calculate_frequency_axis():
     """
     Test the calculate_frequency_axis function for correct frequency axis calculation.
     """
-    assert calculate_frequency_axis(10, 0.1) == [
-        0.0,
-        1.0,
-        2.0,
-        3.0,
-        4.0,
-    ]
+    expected = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    result = calculate_frequency_axis(10, 0.1)
+    assert np.allclose(result, expected), f"Expected {expected}, but got {result}"
