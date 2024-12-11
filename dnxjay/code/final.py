@@ -10,7 +10,7 @@ This module contains functions for the CP1-24 final project, including:
 import os
 import re
 import numpy as np
-from scipy.interpolate import interp1d
+
 
 
 def fahrenheit_to_kelvin(temp_f):
@@ -85,9 +85,11 @@ def fft_with_check(data):
         # Resample the data to make it equidistant
         original_x = np.arange(len(data))
         new_x = np.linspace(original_x[0], original_x[-1], len(original_x))
-        interpolator = interp1d(original_x, data, kind='linear')
-        data = interpolator(new_x)
+        # Linear interpolation
+        data = np.interp(new_x, original_x, data)
+
     return np.fft.fft(data)
+
 
 
 def calculate_frequency_axis(data_length, sampling_interval):
