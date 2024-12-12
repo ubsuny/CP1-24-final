@@ -9,9 +9,8 @@ Functions:
 
 import os
 import sys
-sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo_midterm/midtermcode/accel')
-
 from mtaccelfuncts import read_acceleration, check_direction
+sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo_midterm/midtermcode/accel')
 
 def calculate_dir(accel_file):
     """
