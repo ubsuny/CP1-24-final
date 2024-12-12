@@ -14,7 +14,7 @@ import csv
 import tempfile
 import pytest
 from mtaccelfuncts import read_acceleration, check_direction
-sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo_midterm/midtermcode/accel')
+sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo/midterm/midtermcode/accel')
 
 @pytest.fixture
 def tmp_sample_csv_file():

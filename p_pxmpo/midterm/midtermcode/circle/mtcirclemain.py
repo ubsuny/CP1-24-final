@@ -6,7 +6,7 @@ GPS points using functions from the `mtcirclefuncts` module.
 import sys
 import os
 import mtcirclefuncts
-sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo_midterm/midtermcode/circle')
+sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo/midterm/midtermcode/circle')
 
 # Prompt the user for the CSV file name
 file_input = input("Please enter the CSV circle data file path: ")

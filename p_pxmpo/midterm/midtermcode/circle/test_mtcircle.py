@@ -14,7 +14,7 @@ import sys
 import math
 import pytest
 from mtcirclefuncts import haversine, calculate_distances
-sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo_midterm/midtermcode/circle')
+sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo/midterm/midtermcode/circle')
 
 def test_haversine():
     """
