@@ -1,7 +1,7 @@
 """Test unix conversions"""
 
 import tempfile
-import parse_temperature_from_markdown
+from parse_temperature_from_markdown import parse_temperature_from_markdown
 
 def test_parse_temperature_from_markdown():
     """

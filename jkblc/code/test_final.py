@@ -7,7 +7,6 @@ import pytest
 
 from final import (
     fahrenheit_to_kelvin,
-    parse_temperature_from_markdown,
     list_markdown_files,
     sine_function,
     non_linear_fit,
