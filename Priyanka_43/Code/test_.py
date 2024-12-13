@@ -20,12 +20,6 @@ def test_yards_to_meters():
     assert yards_to_meters(1) == 0.9144   # checking if 1 yard = 0.9144 meter or not
 
 def test_calculate_direction():
-    """Tests for acceleration along the x and z axes"""
-    # Test for acceleration along the x-axis
-    theta, phi = calculate_direction(1, 0, 0)
-    assert pytest.approx(theta, 0.1) == 90  # Polar angle θ
-    assert pytest.approx(phi, 0.1) == 0     # Azimuthal angle φ
-
-    # Test for acceleration along the z-axis
-    theta, phi = calculate_direction(0, 0, 1)
-    assert pytest.approx(theta, 0.1) == 0   # Polar angle θ
+    # Sample acceleration data as a DataFrame
+    data = pd.DataFrame({"x": [1, 0], "y": [0, 1], "z": [0, 0]})
+    assert calculate_direction(data) == [0, 90]  # Approximate expected angles
