@@ -2,7 +2,7 @@
 unit testing module for unit_converter.py and motion_direction.py
 '''
 import pytest
-
+import pandas as pd 
 from unit_converter import feet_to_meters, yards_to_meters
 
 from motion_direction import calculate_direction
