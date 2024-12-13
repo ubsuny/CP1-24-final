@@ -137,7 +137,8 @@ def fft_wrapper(data: np.ndarray, inverse: bool = False) -> np.ndarray:
 
   if inverse:
     return np.fft.ifft(data)
-return np.fft.fft(data)
+else:
+    return np.fft.fft(data)
 
 # Calculate frequency axis in useful units (e.g., Hz) without using numpy
 def calculate_frequency_axis(length: int, sample_rate: float) -> List[float]:
