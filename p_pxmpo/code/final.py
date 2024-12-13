@@ -37,7 +37,7 @@ def curve_fit(model, xdata, ydata, p0, learning_rate=0.001, max_iter=1000, tol=1
 
         # Update parameters
         params -= learning_rate * grad
-        
+
         # Check convergence
         current_loss = loss(params)
         if np.abs(prev_loss - current_loss) < tol:
