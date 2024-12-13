@@ -1,9 +1,7 @@
 """Algorithms file"""
 
 import os
-from typing import Tuple
 import numpy as np
-
 
 # Temperature Conversion Function
 def fahrenheit_to_kelvin(fahrenheit):
@@ -106,7 +104,8 @@ def non_linear_fit(x_data, y_data, initial_guess, steps=20000, lr=0.0001):
 
         # Calculate gradients
         grad_amplitude = -2 * np.sum(error * np.sin(frequency * x_data + phase))
-        grad_frequency = -2 * np.sum(error * amplitude * x_data * np.cos(frequency * x_data + phase))
+        grad_frequency = -2 * np.sum(error * amplitude * x_data * np.cos(
+            frequency * x_data + phase))
         grad_phase = -2 * np.sum(error * amplitude * np.cos(frequency * x_data + phase))
         grad_offset = -2 * np.sum(error)
 
