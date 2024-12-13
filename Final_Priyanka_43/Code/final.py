@@ -11,10 +11,10 @@ Functions:
 """
 
 import os
-import numpy as np
-import math
-from typing import List, Tuple
+import re
+from typing import List
 from typing import Callable
+import numpy as np
 
 # Function to convert Fahrenheit to Kelvin
 def fahrenheit_to_kelvin(fahrenheit: float) -> float:
@@ -31,7 +31,6 @@ def fahrenheit_to_kelvin(fahrenheit: float) -> float:
 
 
 # Parser to extract temperature from a markdown file
-import re
 
 def extract_temperature_from_markdown(file_path: str) -> float:
     """
@@ -46,7 +45,7 @@ def extract_temperature_from_markdown(file_path: str) -> float:
         float: Extracted temperature value.
     """
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             for line in file:
                 if 'Temperature:' in line:
                     # Extracting the temperature value after 'Temperature:'
@@ -54,9 +53,9 @@ def extract_temperature_from_markdown(file_path: str) -> float:
                     # Use regex to extract the numeric part
                     temp_value = float(re.findall(r"[-+]?\d*\.\d+|\d+", temp_part)[0])
                     return temp_value
-    except FileNotFoundError:
-        raise ValueError(f"Temperature not found in the markdown file: {file_path}")
-    
+    except FileNotFoundError as exc:
+        raise ValueError(f"Temperature not found in the markdown file: {file_path}") from exc
+
     raise ValueError(f"Temperature not found in the markdown file: {file_path}")
 
 
