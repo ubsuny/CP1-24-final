@@ -135,9 +135,8 @@ def fft_wrapper(data: np.ndarray, inverse: bool = False) -> np.ndarray:
     if not np.allclose(diff, diff[0]):  # Check if all the differences are the same
         raise ValueError("Input data must be equidistant.")
 
-  if inverse:
-    return np.fft.ifft(data)
-else:
+    if inverse:
+      return np.fft.ifft(data)
     return np.fft.fft(data)
 
 # Calculate frequency axis in useful units (e.g., Hz) without using numpy
