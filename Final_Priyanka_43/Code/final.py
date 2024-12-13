@@ -1,11 +1,14 @@
 """
 Final.py
-This module contains some importable implementable functions to be used with experiment data stored in CSV and Markdown files. 
+This module contains some importable implementable functions to be use
+with experiment data stored in CSV and Markdown files. 
 Functions:
 -function that converts Fahrenheit to Kelvin
 -parser that reads out the temperature of one markdown file
--filename lister that generates programmatically (using the python os library) a list of your markdown file based on a filename filter.
--non-linear fitting in pure python which includes the functionality to specify the step number of 2^n
+-filename lister that generates programmatically (using the python os library)
+a list of your markdown file based on a filename filter.
+-non-linear fitting in pure python which includes the functionality
+to specify the step number of 2^n
 -numpy wrapper for fft, inverse fft, including functionality that checks for non-equidistant data.
 =pure python (no numpy) to calculate the frequency axis in useful units.
 """
@@ -132,10 +135,9 @@ def fft_wrapper(data: np.ndarray, inverse: bool = False) -> np.ndarray:
     if not np.allclose(diff, diff[0]):  # Check if all the differences are the same
         raise ValueError("Input data must be equidistant.")
 
-    if inverse:
-        return np.fft.ifft(data)
-    else:
-        return np.fft.fft(data)
+  if inverse:
+    return np.fft.ifft(data)
+return np.fft.fft(data)
 
 # Calculate frequency axis in useful units (e.g., Hz) without using numpy
 def calculate_frequency_axis(length: int, sample_rate: float) -> List[float]:
