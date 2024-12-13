@@ -5,7 +5,7 @@ fitting nonlinear sine models, and performing Fourier transforms.
 """
 from unittest.mock import mock_open, patch
 import numpy as np
-from final import (read_first_two_columns, extract_temperature_from_markdown,
+from final import (curve_fit, read_first_two_columns, extract_temperature_from_markdown,
                     fahrenheit_to_kelvin, nonlinear_sine_fit, compute_fft,
                     compute_inverse_fft)
 
@@ -114,3 +114,42 @@ def test_compute_inverse_fft():
     assert np.isrealobj(inverse_fft_result)
     # Allow for small tolerance due to floating-point precision
     assert np.allclose(inverse_fft_result, [1.33333333, 0.69935874, -1.03269207], atol=1e-5)
+
+# Define a simple model function for testing
+def linear_model(x, m, c):
+    """
+    Linear model function.
+    """
+    return m * x + c
+
+def test_curve_fit():
+    """
+    Unit test for fitting a linear model to synthetic data using curve_fit.
+
+    This function generates synthetic noisy data based on a known linear model, fits the model 
+    to the data using the curve_fit function, and performs assertions to verify that the fitted 
+    parameters and covariance matrix are as expected.
+
+    Raises:
+        AssertionError: If the fitted parameters deviate significantly from the true parameters 
+                        or if the covariance matrix is None or has an incorrect shape.
+    """
+    # Synthetic data
+    np.random.seed(42)  # Set a fixed seed for reproducibility
+    xdata = np.linspace(0, 10, 50)
+    true_params = [2.0, 1.0]  # Slope (m) and intercept (c)
+    noise = np.random.normal(0, 0.5, size=xdata.shape)  # Add some noise
+    ydata = linear_model(xdata, *true_params) + noise
+
+    # Initial guess for parameters
+    initial_guess = [1.0, 0.0]
+
+    # Call the curve_fit function
+    popt, pcov = curve_fit(linear_model, xdata, ydata, p0=initial_guess)
+
+    # Assert the fitted parameters are close to the true parameters
+    assert np.allclose(popt, true_params, atol=0.2), f"Fitted parameters {popt} deviate from true parameters {true_params}"
+
+    # Assert the covariance matrix is not None and has the correct shape
+    assert pcov is not None, "Covariance matrix None"
+    assert pcov.shape == (len(true_params), len(true_params)), "Covariance matrix shape incorrect"

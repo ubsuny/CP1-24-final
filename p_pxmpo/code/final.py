@@ -9,11 +9,53 @@ Key functionalities:
 3. Perform nonlinear sine fitting on data.
 4. Compute and visualize FFT and inverse FFT of data.
 """
-
 import csv
 import re
 import numpy as np
-from scipy.optimize import curve_fit
+
+def curve_fit(model, xdata, ydata, p0, learning_rate=0.001, max_iter=1000, tol=1e-6):
+    """
+    Simplified implementation of curve fitting with better handling for divergence.
+    """
+    def loss(params):
+        """Calculate the sum of squared residuals."""
+        residuals = ydata - model(xdata, *params)
+        return np.sum(residuals**2)
+
+    params = np.array(p0, dtype=float)
+    prev_loss = float('inf')
+    for _ in range(max_iter):
+        grad = np.zeros_like(params)
+        delta = 1e-8  # Small delta for finite difference gradient estimation
+        for i in range(len(params)):
+            params_up = params.copy()
+            params_down = params.copy()
+            params_up[i] += delta
+            params_down[i] -= delta
+
+            grad[i] = (loss(params_up) - loss(params_down)) / (2 * delta)
+
+        # Update parameters
+        params -= learning_rate * grad
+        
+        # Check convergence
+        current_loss = loss(params)
+        if np.abs(prev_loss - current_loss) < tol:
+            break
+        if current_loss > prev_loss:  # Safeguard against divergence
+            learning_rate *= 0.5
+        prev_loss = current_loss
+
+    # Estimate covariance matrix (basic approximation)
+    residuals = ydata - model(xdata, *params)
+    dof = len(ydata) - len(params)  # Degrees of freedom
+    if dof > 0:
+        residual_var = np.sum(residuals**2) / dof
+    else:
+        residual_var = 0
+    pcov = np.linalg.pinv(np.dot(grad[:, None], grad[None, :])) * residual_var
+
+    return params, pcov
 
 def read_first_two_columns(csv_file):
     """
