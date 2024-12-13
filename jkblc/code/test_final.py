@@ -84,8 +84,10 @@ def test_non_linear_fit():
     """
     x = np.linspace(0, 10, 100)
     y = sine_function(x, 2, 1, 0, 0)
-    popt, _ = non_linear_fit(x, y, initial_guess=(1, 1, 0, 0))
-    assert pytest.approx(popt[0], 0.1) == 2
+
+    # Correct tuple unpacking
+    amplitude, frequency, phase, offset = non_linear_fit(x, y, initial_guess=(1, 1, 0, 0))
+    assert pytest.approx(amplitude, 0.1) == 2
 
 
 def test_fft_with_check():
