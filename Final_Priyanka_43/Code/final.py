@@ -13,7 +13,6 @@ Functions:
 import os
 import numpy as np
 import math
-from scipy import interpolate
 from typing import List, Tuple
 from typing import Callable
 
@@ -133,12 +132,6 @@ def fft_wrapper(data: np.ndarray, inverse: bool = False) -> np.ndarray:
     diff = np.diff(data)
     if not np.allclose(diff, diff[0]):  # Check if all the differences are the same
         raise ValueError("Input data must be equidistant.")
-
-    # Interpolate the data to an equidistant grid
-    x = np.arange(len(data))  # Original indices
-    f = interpolate.interp1d(x, data, kind='linear', fill_value="extrapolate")
-    new_x = np.linspace(0, len(data) - 1, len(data))  # New indices for equidistant points
-    data = f(new_x)  # Interpolated data
 
     if inverse:
         return np.fft.ifft(data)
