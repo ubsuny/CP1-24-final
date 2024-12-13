@@ -83,25 +83,20 @@ def sine_function(x, amplitude, frequency, phase, offset):
     return amplitude * np.sin(frequency * x + phase) + offset
 
 
-# Custom Non-Linear Fitting Using Gradient Descent
-def non_linear_fit(
-    x_data: np.ndarray, y_data: np.ndarray,
-    initial_guess: Tuple[float, ...], steps: int = 10000, lr: float = 0.001
-) -> Tuple[np.ndarray, np.ndarray]:
+# Non-Linear Fitting Using Gradient Descent
+def non_linear_fit(x_data, y_data, initial_guess, steps=20000, lr=0.0001):
     """
-    Perform non-linear fitting using custom gradient descent.
-
-    This function fits a sine wave model to the provided data.
+    Custom non-linear fitting using gradient descent.
 
     Parameters:
-    x_data (np.ndarray): x-axis data.
-    y_data (np.ndarray): y-axis data.
-    initial_guess (Tuple[float, ...]): Initial guess for fitting parameters.
-    steps (int, optional): Maximum number of fitting steps (default is 10000).
-    lr (float, optional): Learning rate for optimization.
+    x_data (array): x-axis data.
+    y_data (array): y-axis data.
+    initial_guess (tuple): Initial guess for parameters.
+    steps (int): Number of gradient descent steps.
+    lr (float): Learning rate for parameter updates.
 
     Returns:
-    Tuple[np.ndarray, np.ndarray]: Optimal parameters (amplitude, frequency, phase, offset).
+    tuple: Optimized parameters (amplitude, frequency, phase, offset).
     """
     amplitude, frequency, phase, offset = initial_guess
 
@@ -109,12 +104,13 @@ def non_linear_fit(
         y_pred = sine_function(x_data, amplitude, frequency, phase, offset)
         error = y_data - y_pred
 
+        # Calculate gradients
         grad_amplitude = -2 * np.sum(error * np.sin(frequency * x_data + phase))
-        grad_frequency = -2 * np.sum(
-            error * amplitude * x_data * np.cos(frequency * x_data + phase))
+        grad_frequency = -2 * np.sum(error * amplitude * x_data * np.cos(frequency * x_data + phase))
         grad_phase = -2 * np.sum(error * amplitude * np.cos(frequency * x_data + phase))
         grad_offset = -2 * np.sum(error)
 
+        # Update parameters
         amplitude -= lr * grad_amplitude
         frequency -= lr * grad_frequency
         phase -= lr * grad_phase
