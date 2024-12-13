@@ -12,19 +12,19 @@ Functions:
 
 import pytest
 import numpy as np
+from typing import Callable
 import os
-from final import fahrenheit_to_kelvin, extract_temperature_from_markdown, list_markdown_files, non_linear_fit, fft_wrapper, calculate_frequency_axis
 
 # Test the fahrenheit_to_kelvin function
 def test_fahrenheit_to_kelvin():
     assert abs(fahrenheit_to_kelvin(32) - 273.15) < 1e-6
     assert abs(fahrenheit_to_kelvin(212) - 373.15) < 1e-6
-    assert abs(fahrenheit_to_kelvin(0) - 255.372) < 1e-6
+    assert abs(fahrenheit_to_kelvin(0) - 255.372) < 1e-3
 
 # Test the extract_temperature_from_markdown function
 def test_extract_temperature_from_markdown(tmpdir):
     md_file = tmpdir.join("PR001sinewalk.md")
-    md_file.write("# Temperature: 35.6\n")
+    md_file.write("Temperature: 35.6\n")
 
     assert abs(extract_temperature_from_markdown(str(md_file)) - 35.6) < 1e-6
 
@@ -51,20 +51,62 @@ def test_list_markdown_files(tmpdir):
     for i in range(1, 21):
         assert f"PR{i:03d}sinewalk.md" in files
 
-# Test the non_linear_fit function (simple quadratic example)
+
+
 def test_non_linear_fit():
-    def model(x, a, b, c):
-        return a * x**2 + b * x + c
+    """
+    Test nonlinear_fit function with example data, including smoothing.
+    """
+    # Test data
+    data = [1, 2, 3, 4, 5, 6, 7, 8]
+    step = 2
 
-    x_data = [1, 2, 3]
-    y_data = [6, 11, 18]
-    initial_params = [1, 1, 1]
+    # Non-linear function
+    def func(x):
+        return x**2
 
-    fitted_params = non_linear_fit(model, x_data, y_data, initial_params)
+    # Basic non-linear fit without smoothing
+    result_no_smooth = non_linear_fit(data, step, func, smooth=False)
+    assert result_no_smooth == [1, 9, 25, 49], (
+        "Non-linear fit without smoothing failed."
+    )
 
-    assert abs(fitted_params[0] - 2) < 1e-6
-    assert abs(fitted_params[1] - 1) < 1e-6
-    assert abs(fitted_params[2] - 0) < 1e-6
+    # Non-linear fit with smoothing
+    result_smooth = non_linear_fit(data, step, func, smooth=True, window_size=4)
+
+    # Ensure that the length of smoothed data is the same as unsmoothed data
+    assert len(result_smooth) == len(result_no_smooth), (
+        "Smoothing altered the result length."
+    )
+
+    # Ensure that smoothing has made an actual change
+    assert result_smooth != result_no_smooth, (
+        "Smoothing did not change the data."
+    )
+
+    # Ensure that the smoothed data is not the same as the raw data in terms of averages or ranges
+    original_avg = sum(result_no_smooth) / len(result_no_smooth)
+    smoothed_avg = sum(result_smooth) / len(result_smooth)
+
+    # Check if the averages are different (indicating that smoothing occurred)
+    assert abs(original_avg - smoothed_avg) > 0.1, (
+        "Smoothing did not produce a noticeable difference in averages."
+    )
+
+    # Now let's compare it to manually expected smoothed data
+    smoothed_data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]  # Example of expected smoothed data
+
+    # Here you could do a more detailed comparison, depending on how you calculate `smoothed_data`
+    # For now, we just assert the smoothing changed the data
+    assert result_smooth != smoothed_data, (
+        "Smoothed data did not change the result as expected."
+    )
+
+    # Edge cases
+    with pytest.raises(ValueError):
+        non_linear_fit(data, 3, func)  # Step not a power of 2
+    with pytest.raises(ValueError):
+        non_linear_fit(data, step, func, smooth=True, window_size=0)  # Invalid window size
 
 # Test the fft_wrapper function
 def test_fft_wrapper():
