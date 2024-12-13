@@ -14,6 +14,7 @@ import pytest
 import numpy as np
 from typing import Callable
 import os
+from final import fahrenheit_to_kelvin, extract_temperature_from_markdown, list_markdown_files, non_linear_fit, fft_wrapper, calculate_frequency_axis
 
 # Test the fahrenheit_to_kelvin function
 def test_fahrenheit_to_kelvin():
