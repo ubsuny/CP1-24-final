@@ -17,33 +17,6 @@ def fahrenheit_to_kelvin(fahrenheit):
     return (fahrenheit - 32) * 5 / 9 + 273.15
 
 
-# Markdown Temperature Parser
-def parse_temperature_from_markdown(file_path):
-    """
-    Extracts the environment temperature from a Markdown file.
-
-    Parameters:
-    file_path (str): Path to the Markdown file.
-
-    Returns:
-    float: Extracted temperature in Fahrenheit.
-
-    Raises:
-    ValueError: If the temperature is not found or formatted incorrectly.
-    """
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            for line in file:
-                if "Environment Temperature:" in line:
-                    clean_line = line.replace("*", "").replace("**", "").strip()
-                    temp_str = clean_line.split(":")[1].strip().replace("F", "").strip()
-                    return float(temp_str)
-    except (IndexError, ValueError) as exc:
-        raise ValueError(f"Invalid or missing temperature in file: {file_path}") from exc
-
-    raise ValueError(f"Temperature not found in file: {file_path}")
-
-
 # List Markdown Files
 def list_markdown_files(folder_path, keyword="sinewalk"):
     """
