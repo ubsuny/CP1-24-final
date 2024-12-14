@@ -3,7 +3,6 @@ This module convers metafile to unix time.
 """
 
 # convert_to_unix.py
-from datetime import datetime
 import pandas as pd
 
 def convert_to_unix(date_str, time_str):
