@@ -11,7 +11,7 @@ def calculate_direction(acceleration_data):
     """
     directions = []
     for _, row in acceleration_data.iterrows():
-        x, y = row['x'], row['y'],
+        x, y = row['x'], row['y']
         direction = np.degrees(np.arctan2(y, x))
         directions.append(direction)
     return directions
