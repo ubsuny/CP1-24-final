@@ -136,7 +136,7 @@ def fft_wrapper(data: np.ndarray, inverse: bool = False) -> np.ndarray:
         raise ValueError("Input data must be equidistant.")
 
     if inverse:
-      return np.fft.ifft(data)
+        return np.fft.ifft(data)
     return np.fft.fft(data)
 
 # Calculate frequency axis in useful units (e.g., Hz) without using numpy
