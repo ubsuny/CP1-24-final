@@ -16,11 +16,11 @@ that checks for non-equidistant data.
 import pytest
 import numpy as np
 from final import (
-    fahrenheit_to_kelvin, 
-    extract_temperature_from_markdown, 
-    list_markdown_files, 
-    non_linear_fit, 
-    fft_wrapper, 
+    fahrenheit_to_kelvin,
+    extract_temperature_from_markdown,
+    list_markdown_files,
+    non_linear_fit,
+    fft_wrapper,
     calculate_frequency_axis
 )
 # Test the fahrenheit_to_kelvin function
@@ -47,6 +47,9 @@ def test_extract_temperature_from_markdown(tmpdir):
 
 # Test the list_markdown_files function
 def test_list_markdown_files(tmpdir):
+    """
+    Test the list_markdown_files function
+    """
     # Create 20 markdown files with names PR001sinewalk.md to PR020sinewalk.md
     for i in range(1, 21):
         md_file = tmpdir.join(f"PR{i:03d}sinewalk.md")
