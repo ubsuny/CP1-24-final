@@ -113,29 +113,28 @@ def non_linear_fit(data, model_func, initial_guess, config):
     max_iter = config.get("max_iter", 1000)
     tol = config.get("tol", 1e-6)
 
-    # Ensure input data is clean
-    data = data.dropna()
-    data['x'] = data['x'] / max(data['x'])
-    data['y'] = data['y'] / max(data['y'])
-
-    # Initialization
     params = np.array(initial_guess, dtype=np.float64)
     prev_residual_sum = np.inf
 
     for step in range(max_iter):
-        # Compute residuals
+        # Compute residuals and gradients
         residuals = data['y'] - model_func(data['x'], *params)
-
-        # Compute gradients
         gradients = -2 * np.dot(residuals, data['x']) / len(data['x'])
 
         # Update parameters
         params -= (2 ** step_power) * gradients
 
-        # Check convergence
+        # Calculate residual sum
         residual_sum = np.sum(residuals**2)
-        print(f"Step {step}: Gradients: {gradients}, Params: {params}, Residual Sum: {residual_sum}")
+
+        # Check for divergence
+        if np.isnan(residual_sum) or np.isinf(residual_sum):
+            print(f"Step {step}: Divergence detected. Residual Sum: {residual_sum}")
+            return params, residuals.tolist()
+
+        # Check for convergence
         if np.abs(prev_residual_sum - residual_sum) < tol:
+            print(f"Step {step}: Converged. Residual Sum: {residual_sum}")
             break
 
         prev_residual_sum = residual_sum
