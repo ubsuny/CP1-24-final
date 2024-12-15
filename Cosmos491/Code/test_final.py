@@ -149,8 +149,7 @@ def test_non_linear_fit():
     clean_data.loc[:, 'y'] = clean_data['y'] / max(clean_data['y'])
 
     # Configuration for non_linear_fit
-    config = {"step_power": 2, "max_iter": 1000, "tol": 1e-6}
-
+    quadratic_fit_config = {"step_power": 1, "max_iter": 1500, "tol": 1e-4}
 
     # Perform non-linear fitting
     params, residuals = non_linear_fit(
