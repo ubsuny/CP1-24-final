@@ -133,6 +133,7 @@ def test_generate_data():
 def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
+    This includes handling NaN values in the data and proper convergence.
     """
     # Generate clean data using a quadratic model
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
@@ -144,16 +145,16 @@ def test_non_linear_fit():
     # Remove NaN values
     clean_data = data.dropna()
 
-    # Normalize data
-    clean_data.loc[:, 'x'] = clean_data['x'] / max(clean_data['x'])
-    clean_data.loc[:, 'y'] = clean_data['y'] / max(clean_data['y'])
+    # Normalize data for better convergence
+    clean_data['x'] = (clean_data['x'] - clean_data['x'].min()) / (clean_data['x'].max() - clean_data['x'].min())
+    clean_data['y'] = (clean_data['y'] - clean_data['y'].min()) / (clean_data['y'].max() - clean_data['y'].min())
 
     # Configuration for non_linear_fit
     quadratic_fit_config = {"step_power": 1, "max_iter": 1500, "tol": 1e-4}
 
     # Perform non-linear fitting
     params, residuals = non_linear_fit(
-        clean_data, quadratic_model, initial_guess=[1, 1, 1], config=quadratic_fit_config
+        clean_data, quadratic_model, initial_guess=[1.0, 2.0, 3.0], config=quadratic_fit_config
     )
 
     # Assertions
