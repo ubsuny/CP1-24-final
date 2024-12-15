@@ -153,7 +153,7 @@ def test_non_linear_fit():
 
     # Perform non-linear fitting
     params, residuals = non_linear_fit(
-        clean_data, quadratic_model, initial_guess=[1, 1, 1], config=config
+        clean_data, quadratic_model, initial_guess=[1, 1, 1], config=quadratic_fit_config
     )
 
     # Assertions
