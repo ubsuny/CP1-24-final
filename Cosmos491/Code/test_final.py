@@ -133,25 +133,34 @@ def test_generate_data():
 def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
+    This includes handling NaN values in the data.
     """
+    # Generate clean data using a quadratic model
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
 
-    # Add config for non_linear_fit
+    # Introduce NaN values in the data for testing
+    data.loc[10, 'x'] = np.nan
+    data.loc[20, 'y'] = np.nan
+
+    # Configuration dictionary for non_linear_fit
     config = {"step_power": 4, "max_iter": 1000, "tol": 1e-6}
 
-    # Ensure proper scaling of data
-    data['x'] = data['x'] / max(data['x'])
-    data['y'] = data['y'] / max(data['y'])
+    # Handle NaN values by dropping rows with missing data
+    clean_data = data.dropna()
 
-    # Use config for non_linear_fit
-    params, residuals = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], config=config)
+    # Normalize clean data for stability
+    clean_data['x'] = clean_data['x'] / max(clean_data['x'])
+    clean_data['y'] = clean_data['y'] / max(clean_data['y'])
 
-    # Assertions
-    assert len(params) == 3
-    assert isinstance(residuals, list)
-    assert np.isclose(params[0], 1, atol=0.1)
-    assert np.isclose(params[1], 2, atol=0.1)
-    assert np.isclose(params[2], 3, atol=0.1)
+    # Fit the clean data using non_linear_fit
+    params, residuals = non_linear_fit(clean_data, quadratic_model, initial_guess=[0, 0, 0], config=config)
+
+    # Assertions to ensure the function works as expected
+    assert len(params) == 3, "The number of fitted parameters should be 3."
+    assert isinstance(residuals, list), "Residuals should be returned as a list."
+    assert np.isclose(params[0], 1, atol=0.1), f"Expected parameter 0 to be close to 1, got {params[0]}"
+    assert np.isclose(params[1], 2, atol=0.1), f"Expected parameter 1 to be close to 2, got {params[1]}"
+    assert np.isclose(params[2], 3, atol=0.1), f"Expected parameter 2 to be close to 3, got {params[2]}"
 
 def test_plot_fit():
     """
