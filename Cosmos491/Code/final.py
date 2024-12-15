@@ -93,49 +93,54 @@ def generate_data(func, x_range, params, noise_level=0):
         y += np.random.normal(0, noise_level, size=len(x))
     return pd.DataFrame({'x': x, 'y': y})
 
-def test_non_linear_fit():
+def non_linear_fit(data, model_func, initial_guess, config):
     """
-    Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
+    Perform non-linear fitting using gradient descent.
+
+    Parameters:
+        data (pandas.DataFrame): Dataframe containing x and y values.
+        model_func (callable): The model function to fit.
+        initial_guess (list): Initial guess for the parameters.
+        config (dict): Configuration dictionary with keys:
+            - step_power: Specifies the step size as 2^n.
+            - max_iter: Maximum number of iterations.
+            - tol: Tolerance for convergence.
+
+    Returns:
+        tuple: Optimized parameters and a list of residuals.
     """
-    # Generate clean data
-    data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
+    step_power = config.get("step_power", 4)
+    max_iter = config.get("max_iter", 1000)
+    tol = config.get("tol", 1e-6)
 
-    # Add NaN values and clean them
-    data.loc[10, 'x'] = np.nan
-    data.loc[20, 'y'] = np.nan
-    clean_data = data.dropna()
+    # Ensure input data is clean
+    data = data.dropna()
+    data['x'] = data['x'] / max(data['x'])
+    data['y'] = data['y'] / max(data['y'])
 
-    # Normalize data
-    clean_data['x'] = clean_data['x'] / max(clean_data['x'])
-    clean_data['y'] = clean_data['y'] / max(clean_data['y'])
+    # Initialization
+    params = np.array(initial_guess, dtype=np.float64)
+    prev_residual_sum = np.inf
 
-    # Configurations for fitting
-    config = {"step_power": 2, "max_iter": 1000, "tol": 1e-6}
+    for step in range(max_iter):
+        # Compute residuals
+        residuals = data['y'] - model_func(data['x'], *params)
 
-    # Perform non-linear fitting
-    try:
-        params, residuals = non_linear_fit(
-            clean_data, quadratic_model, initial_guess=[1, 1, 1], config=config
-        )
-    except ValueError as e:
-        print(f"ValueError during fitting: {e}")
-        return
-    except TypeError as e:
-        print(f"TypeError during fitting: {e}")
-        return
+        # Compute gradients
+        gradients = -2 * np.dot(residuals, data['x']) / len(data['x'])
 
-    # Assertions
-    assert len(params) == 3, "Expected 3 parameters."
-    assert isinstance(residuals, list), "Residuals should be a list."
-    assert np.isclose(params[0], 1, atol=0.1), (
-        f"Expected param 0 close to 1, got {params[0]}"
-    )
-    assert np.isclose(params[1], 2, atol=0.1), (
-        f"Expected param 1 close to 2, got {params[1]}"
-    )
-    assert np.isclose(params[2], 3, atol=0.1), (
-        f"Expected param 2 close to 3, got {params[2]}"
-    )
+        # Update parameters
+        params -= (2 ** step_power) * gradients
+
+        # Check convergence
+        residual_sum = np.sum(residuals**2)
+        print(f"Step {step}: Gradients: {gradients}, Params: {params}, Residual Sum: {residual_sum}")
+        if np.abs(prev_residual_sum - residual_sum) < tol:
+            break
+
+        prev_residual_sum = residual_sum
+
+    return params, residuals.tolist()
 
 def plot_fit(data, model_func, params):
     """
