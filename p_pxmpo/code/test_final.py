@@ -143,7 +143,7 @@ def test_extract_temperature_no_data():
     Test that no temperature data is returned when the markdown file contains no temperature
     information.
     """
-    data = extract_temperature_from_markdown('/workspaces/FORKCP1-24-final/p_pxmpo/data/no_temp.md')
+    data = extract_temperature_from_markdown('no_temp.md')
     assert len(data) == 0  # Ensure no data is returned
 
 def test_extract_temperature_f_to_k():
