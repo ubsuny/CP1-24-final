@@ -9,180 +9,112 @@ Key functionalities:
 3. Perform nonlinear sine fitting on data.
 4. Compute and visualize FFT and inverse FFT of data.
 """
-import csv
 import re
 import numpy as np
+import pandas as pd
 
-def read_first_two_columns(csv_file):
-    """
-    Reads the first two columns of a CSV file.
-
-    Args:
-        csv_file (str): Path to the CSV file.
-
-    Returns:
-        tuple: Two lists containing the first and second columns of the CSV file.
-    """
-    first_column = []
-    second_column = []
+def load_csv_data(file_path):
+    """Load CSV data from the specified file."""
     try:
-        with open(csv_file, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                if len(row) >= 2:
-                    first_column.append(row[0])
-                    second_column.append(row[1])
-    except FileNotFoundError:
-        print(f"Error: The file '{csv_file}' does not exist.")
-    except IsADirectoryError:
-        print(f"Error: Expected a file, but found a directory at '{csv_file}'.")
-    except csv.Error as e:
-        print(f"CSV error occurred: {e}")
-    except PermissionError:
-        print(f"Error: Permission denied to access the file '{csv_file}'.")
-    except OSError as e:
-        print(f"OS error occurred: {e}")
-    return first_column, second_column
+        data = pd.read_csv(file_path)
+        return data['Time (s)'].values, data['Latitude (\u00b0)'].values
+    except FileNotFoundError as exc:
+        raise ValueError(f"File {file_path} not found.") from exc
+    except pd.errors.EmptyDataError as exc:
+        raise ValueError(f"File {file_path} is empty.") from exc
+    except pd.errors.ParserError as exc:
+        raise ValueError(f"Error parsing {file_path}.") from exc
+    except Exception as exc:
+        raise ValueError(f"Error loading {file_path}: {exc}") from exc
 
-def extract_temperature_from_markdown(file_path):
-    """
-    Extracts temperature information from a Markdown file.
 
-    Args:
-        file_path (str): Path to the Markdown file.
+def sine_model_function(x, a, b, c):
+    """A sine model function."""
+    return a * np.sin(b * x) + c
 
-    Returns:
-        tuple: The temperature value and its unit ('°C', '°F', 'K'). 
-               Returns (None, None) if no temperature is found or an error occurs.
-    """
+def fit_curve(x, y, model_function):
+    """Fit a sine curve using least squares method without using scipy."""
+
+    # Initial guess for a, b, and c
+    a_guess = np.max(y) - np.min(y)
+    b_guess = 2 * np.pi / (x[-1] - x[0])
+    c_guess = np.mean(y)
+
+    def residuals(params):
+        a, b, c = params
+        return model_function(x, a, b, c) - y
+
+    def sum_of_squares(params):
+        return np.sum(residuals(params)**2)
+
+    def gradient(params, epsilon=1e-5):
+        grad = np.zeros_like(params)
+        for i in range(len(params)):
+            params_plus = params.copy()
+            params_minus = params.copy()
+            params_plus[i] += epsilon
+            params_minus[i] -= epsilon
+            grad[i] = (sum_of_squares(params_plus) - sum_of_squares(params_minus)) / (2 * epsilon)
+        return grad
+
+    # Gradient descent optimization
+    params = np.array([a_guess, b_guess, c_guess])
+    learning_rate = 1e-3
+    max_iter = 1000
+    tolerance = 1e-6
+
+    for _ in range(max_iter):
+        grad = gradient(params)
+        params -= learning_rate * grad
+        if np.linalg.norm(grad) < tolerance:
+            break
+
+    return params
+
+def fahrenheit_to_kelvin(fahrenheit):
+    """Convert Fahrenheit to Kelvin."""
+    return (fahrenheit - 32) * 5/9 + 273.15
+
+def extract_temperature_from_markdown(file_path, keyword=None):
+    """Extract temperature data from markdown files."""
+    temperature_data = []
+
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
-        match = re.search(r"Temperature:\s*([+-]?\d+(?:\.\d+)?)\s*(°C|°F|K)?", content)
-        if match:
-            temperature_value = float(match.group(1))
-            unit = match.group(2) if match.group(2) else "C"
-            return temperature_value, unit
-        print("Temperature not found in the file.")
-        return None, None
-    except FileNotFoundError:
-        print(f"Error: The file '{file_path}' does not exist.")
-        return None, None
-    except PermissionError:
-        print(f"Error: Permission denied to access the file '{file_path}'.")
-        return None, None
-    except IOError as e:
-        print(f"IO error occurred: {e}")
-        return None, None
+            if keyword:
+                matches = re.findall(rf'{keyword}:\s*(-?\d+(\.\d+)?)', content)
+            else:
+                matches = re.findall(r'Temperature:\s*(-?\d+(\.\d+)?)', content)
 
-def fahrenheit_to_kelvin(fahrenheit):
-    """
-    Converts temperature from Fahrenheit to Kelvin.
+            for match in matches:
+                temp = float(match[0])
+                if 'F' in file_path:
+                    temp = fahrenheit_to_kelvin(temp)
+                temperature_data.append(temp)
 
-    Args:
-        fahrenheit (float): Temperature in Fahrenheit.
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"File {file_path} not found.") from exc
+    except ValueError as e:
+        print(f"Error converting temperature data in {file_path}: {e}")
+    except re.error as e:
+        print(f"Regex error while processing {file_path}: {e}")
+    except OSError as e:
+        print(f"OS error while accessing {file_path}: {e}")
+    except Exception as e:
+        # Log the exception for debugging, then re-raise to avoid silencing unexpected issues
+        print(f"Unexpected error occurred while processing {file_path}: {e}")
+        raise
 
-    Returns:
-        float: Temperature in Kelvin.
-    """
-    kelvin = (fahrenheit - 32) * 5/9 + 273.15
-    return kelvin
+    return temperature_data
 
-def curve_fit(func, xdata, ydata, p0, learning_rate=0.001):
-    """
-    Custom implementation of curve fitting using gradient descent.
-
-    Parameters:
-    - func: The model function, func(x, *params).
-    - xdata: Array-like, the independent variable data.
-    - ydata: Array-like, the dependent variable data.
-    - p0: Initial guess for the parameters.
-    - learning_rate: Learning rate for gradient descent (default 0.001).
-
-    Returns:
-    - popt: Optimal parameters for the model function.
-    - pcov: Covariance matrix of the parameter estimates (simplified here).
-    """
-    p = np.array(p0, dtype=float)
-    n_params = len(p)
-    max_iter, tol = 1000, 1e-6
-
-    for iteration in range(max_iter):
-        residuals = ydata - func(xdata, *p)
-
-        # Finite difference method for Jacobian with smaller perturbation
-        perturb = 1e-6
-        jacobian = np.array([
-            (func(xdata, *(p + perturb * np.eye(n_params)[i])) - func(xdata, *p)) / perturb
-            for i in range(n_params)
-        ]).T
-
-        gradient = -2 * np.dot(jacobian.T, residuals)
-        p -= learning_rate * gradient
-
-        # Dynamically adjust learning rate based on gradient norm and relative cost improvement
-        if np.linalg.norm(gradient) < tol:
-            print(f"Converged in {iteration} iterations.")
-            break
-        if np.linalg.norm(gradient) > 1e-3:
-            learning_rate *= 0.8
-
-    else:
-        print("Maximum iterations reached without convergence.")
-
-    try:
-        pcov = np.linalg.inv(np.dot(jacobian.T, jacobian) + 1e-6 * np.eye(n_params))
-    except np.linalg.LinAlgError:
-        pcov = np.full((n_params, n_params), np.nan)
-
-    return p, pcov
-
-def nonlinear_sine_fit(csv_file, step_exponent=0):
-    """
-    Performs nonlinear sine fitting on data from a CSV file.
-
-    Args:
-        csv_file (str): Path to the CSV file.
-        step_exponent (int): Exponent for downsampling the data (default: 0).
-
-    Returns:
-        tuple: Optimized parameters, covariance matrix, downsampled x_data, 
-               and downsampled y_data. Returns (None, None, None, None) on failure.
-    """
-    x_data, y_data = read_first_two_columns(csv_file)
-    try:
-        x_data = np.array([float(x) for x in x_data])
-        y_data = np.array([float(y) for y in y_data])
-    except ValueError:
-        print("Error: Columns contain non-numeric data.")
-        return None, None, None, None
-
-    step = 2 ** step_exponent
-    x_data = x_data[::step]
-    y_data = y_data[::step]
-
-    def sine_wave(x, amplitude, frequency, phase_shift, offset):
-        return amplitude * np.sin(frequency * x + phase_shift) + offset
-
-    initial_guess = [1, 2 * np.pi / (x_data[-1] - x_data[0]), 0, np.mean(y_data)]
-    try:
-        # with full_output = False, always returns a 2-tuple
-        # pylint: disable-next=unbalanced-tuple-unpacking
-        popt, pcov = curve_fit(sine_wave, x_data, y_data, p0=initial_guess)
-    except RuntimeError:
-        print("Error: Curve fitting failed.")
-        return None, None, None, None
-    return popt, pcov, x_data, y_data
 
 def compute_fft(y_data, x_data):
     """
     Computes the Fast Fourier Transform (FFT) of y_data.
-
     Args:
         y_data (ndarray): Data values to transform.
         x_data (ndarray): Corresponding x-axis values.
-
     Returns:
         tuple: Frequencies (scaled), magnitudes, and FFT result (complex numbers).
     """
