@@ -133,7 +133,6 @@ def test_generate_data():
 def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
-    This includes handling NaN values in the data and proper convergence.
     """
     # Generate clean data using a quadratic model
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
@@ -150,7 +149,7 @@ def test_non_linear_fit():
     clean_data.loc[:, 'y'] = clean_data['y'] / max(clean_data['y'])
 
     # Configuration for non_linear_fit
-    config = {"step_power": 3, "max_iter": 1000, "tol": 1e-6}
+    config = {"step_power": 1, "max_iter": 1000, "tol": 1e-6}
 
     # Perform non-linear fitting
     params, residuals = non_linear_fit(
@@ -184,7 +183,7 @@ def test_plot_fit():
     # Ensure no exceptions during plotting
     try:
         plot_fit(data, quadratic_model, params)
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         pytest.fail(f"Plotting failed with exception: {e}")
 
 def test_check_equidistant():
