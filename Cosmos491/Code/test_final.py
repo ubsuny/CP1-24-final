@@ -133,7 +133,7 @@ def test_generate_data():
 def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
-    This includes handling NaN values in the data.
+    This includes handling NaN values in the data and proper convergence.
     """
     # Generate clean data using a quadratic model
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
@@ -146,8 +146,8 @@ def test_non_linear_fit():
     clean_data = data.dropna()
 
     # Normalize data
-    clean_data['x'] = clean_data['x'] / max(clean_data['x'])
-    clean_data['y'] = clean_data['y'] / max(clean_data['y'])
+    clean_data.loc[:, 'x'] = clean_data['x'] / max(clean_data['x'])
+    clean_data.loc[:, 'y'] = clean_data['y'] / max(clean_data['y'])
 
     # Configuration for non_linear_fit
     config = {"step_power": 3, "max_iter": 1000, "tol": 1e-6}
@@ -160,6 +160,7 @@ def test_non_linear_fit():
     # Assertions
     assert len(params) == 3, "Expected 3 fitted parameters."
     assert isinstance(residuals, list), "Residuals should be returned as a list."
+    assert not any(np.isnan(params)), f"Parameters should not contain NaN values. Got: {params}"
     assert np.isclose(params[0], 1, atol=0.1), f"Expected parameter 0 close to 1, got {params[0]}"
     assert np.isclose(params[1], 2, atol=0.1), f"Expected parameter 1 close to 2, got {params[1]}"
     assert np.isclose(params[2], 3, atol=0.1), f"Expected parameter 2 close to 3, got {params[2]}"
