@@ -138,29 +138,31 @@ def test_non_linear_fit():
     # Generate clean data using a quadratic model
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
 
-    # Introduce NaN values in the data for testing
+    # Introduce NaN values for testing
     data.loc[10, 'x'] = np.nan
     data.loc[20, 'y'] = np.nan
 
-    # Configuration dictionary for non_linear_fit
-    config = {"step_power": 4, "max_iter": 1000, "tol": 1e-6}
-
-    # Handle NaN values by dropping rows with missing data
+    # Remove NaN values
     clean_data = data.dropna()
 
-    # Normalize clean data for stability
+    # Normalize data
     clean_data['x'] = clean_data['x'] / max(clean_data['x'])
     clean_data['y'] = clean_data['y'] / max(clean_data['y'])
 
-    # Fit the clean data using non_linear_fit
-    params, residuals = non_linear_fit(clean_data, quadratic_model, initial_guess=[0, 0, 0], config=config)
+    # Configuration for non_linear_fit
+    config = {"step_power": 3, "max_iter": 1000, "tol": 1e-6}
 
-    # Assertions to ensure the function works as expected
-    assert len(params) == 3, "The number of fitted parameters should be 3."
+    # Perform non-linear fitting
+    params, residuals = non_linear_fit(
+        clean_data, quadratic_model, initial_guess=[1, 1, 1], config=config
+    )
+
+    # Assertions
+    assert len(params) == 3, "Expected 3 fitted parameters."
     assert isinstance(residuals, list), "Residuals should be returned as a list."
-    assert np.isclose(params[0], 1, atol=0.1), f"Expected parameter 0 to be close to 1, got {params[0]}"
-    assert np.isclose(params[1], 2, atol=0.1), f"Expected parameter 1 to be close to 2, got {params[1]}"
-    assert np.isclose(params[2], 3, atol=0.1), f"Expected parameter 2 to be close to 3, got {params[2]}"
+    assert np.isclose(params[0], 1, atol=0.1), f"Expected parameter 0 close to 1, got {params[0]}"
+    assert np.isclose(params[1], 2, atol=0.1), f"Expected parameter 1 close to 2, got {params[1]}"
+    assert np.isclose(params[2], 3, atol=0.1), f"Expected parameter 2 close to 3, got {params[2]}"
 
 def test_plot_fit():
     """
