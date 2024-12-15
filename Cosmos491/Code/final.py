@@ -112,7 +112,7 @@ def non_linear_fit(data, model_func, initial_guess, step_power=4):
         return data['y'] - predicted
 
     step_size = 2 ** step_power
-    params = np.array(initial_guess, dtype=float)  # Ensure params are float64
+    params = np.array(initial_guess, dtype=float)  # Ensure float64 for stability
     prev_residual_sum = np.inf
 
     for _ in range(1000):  # Maximum iterations
@@ -123,8 +123,12 @@ def non_linear_fit(data, model_func, initial_guess, step_power=4):
         if np.isnan(residual_sum):
             break
 
-        # Calculate gradient with numerical stability
-        grad = -2 * np.dot(res, data['x']) / (len(data['x']) + 1e-8)
+        # Compute gradient for each parameter
+        grad = np.array([
+            -2 * np.sum(res * (data['x']**2)),  # Gradient for 'a'
+            -2 * np.sum(res * data['x']),      # Gradient for 'b'
+            -2 * np.sum(res)                  # Gradient for 'c'
+        ])
 
         # Update parameters
         new_params = params - step_size * grad
