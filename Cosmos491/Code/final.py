@@ -237,4 +237,3 @@ def convert_to_mhz(freq_axis):
         list: Frequency axis in MHz.
     """
     return [freq / 1_000_000.0 for freq in freq_axis]
-
