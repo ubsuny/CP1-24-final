@@ -257,4 +257,3 @@ def test_convert_to_mhz():
     expected = [0.0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, -0.0004, -0.0003, -0.0002, -0.0001]
     result = convert_to_mhz(freq_axis)
     assert result == expected, f"Expected {expected} but got {result}"
-
