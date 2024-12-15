@@ -13,50 +13,6 @@ import csv
 import re
 import numpy as np
 
-def curve_fit(model, xdata, ydata, p0, learning_rate=0.001, max_iter=1000, tol=1e-6):
-    """
-    Simplified implementation of curve fitting with better handling for divergence.
-    """
-    def loss(params):
-        """Calculate the sum of squared residuals."""
-        residuals = ydata - model(xdata, *params)
-        return np.sum(residuals**2)
-
-    params = np.array(p0, dtype=float)
-    prev_loss = float('inf')
-    for _ in range(max_iter):
-        grad = np.zeros_like(params)
-        delta = 1e-8  # Small delta for finite difference gradient estimation
-        for i in range(len(params)):
-            params_up = params.copy()
-            params_down = params.copy()
-            params_up[i] += delta
-            params_down[i] -= delta
-
-            grad[i] = (loss(params_up) - loss(params_down)) / (2 * delta)
-
-        # Update parameters
-        params -= learning_rate * grad
-
-        # Check convergence
-        current_loss = loss(params)
-        if np.abs(prev_loss - current_loss) < tol:
-            break
-        if current_loss > prev_loss:  # Safeguard against divergence
-            learning_rate *= 0.5
-        prev_loss = current_loss
-
-    # Estimate covariance matrix (basic approximation)
-    residuals = ydata - model(xdata, *params)
-    dof = len(ydata) - len(params)  # Degrees of freedom
-    if dof > 0:
-        residual_var = np.sum(residuals**2) / dof
-    else:
-        residual_var = 0
-    pcov = np.linalg.pinv(np.dot(grad[:, None], grad[None, :])) * residual_var
-
-    return params, pcov
-
 def read_first_two_columns(csv_file):
     """
     Reads the first two columns of a CSV file.
@@ -132,6 +88,55 @@ def fahrenheit_to_kelvin(fahrenheit):
     """
     kelvin = (fahrenheit - 32) * 5/9 + 273.15
     return kelvin
+
+def curve_fit(func, xdata, ydata, p0, learning_rate=0.001):
+    """
+    Custom implementation of curve fitting using gradient descent.
+
+    Parameters:
+    - func: The model function, func(x, *params).
+    - xdata: Array-like, the independent variable data.
+    - ydata: Array-like, the dependent variable data.
+    - p0: Initial guess for the parameters.
+    - learning_rate: Learning rate for gradient descent (default 0.001).
+
+    Returns:
+    - popt: Optimal parameters for the model function.
+    - pcov: Covariance matrix of the parameter estimates (simplified here).
+    """
+    p = np.array(p0, dtype=float)
+    n_params = len(p)
+    max_iter, tol = 1000, 1e-6
+
+    for iteration in range(max_iter):
+        residuals = ydata - func(xdata, *p)
+
+        # Finite difference method for Jacobian with smaller perturbation
+        perturb = 1e-6
+        jacobian = np.array([
+            (func(xdata, *(p + perturb * np.eye(n_params)[i])) - func(xdata, *p)) / perturb
+            for i in range(n_params)
+        ]).T
+
+        gradient = -2 * np.dot(jacobian.T, residuals)
+        p -= learning_rate * gradient
+
+        # Dynamically adjust learning rate based on gradient norm and relative cost improvement
+        if np.linalg.norm(gradient) < tol:
+            print(f"Converged in {iteration} iterations.")
+            break
+        if np.linalg.norm(gradient) > 1e-3:
+            learning_rate *= 0.8
+
+    else:
+        print("Maximum iterations reached without convergence.")
+
+    try:
+        pcov = np.linalg.inv(np.dot(jacobian.T, jacobian) + 1e-6 * np.eye(n_params))
+    except np.linalg.LinAlgError:
+        pcov = np.full((n_params, n_params), np.nan)
+
+    return p, pcov
 
 def nonlinear_sine_fit(csv_file, step_exponent=0):
     """

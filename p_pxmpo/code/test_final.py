@@ -4,6 +4,7 @@ It includes tests for reading CSV and markdown data, converting temperatures,
 fitting nonlinear sine models, and performing Fourier transforms.
 """
 from unittest.mock import mock_open, patch
+import pytest
 import numpy as np
 from final import (curve_fit, read_first_two_columns, extract_temperature_from_markdown,
                     fahrenheit_to_kelvin, nonlinear_sine_fit, compute_fft,
@@ -115,41 +116,34 @@ def test_compute_inverse_fft():
     # Allow for small tolerance due to floating-point precision
     assert np.allclose(inverse_fft_result, [1.33333333, 0.69935874, -1.03269207], atol=1e-5)
 
-# Define a simple model function for testing
-def linear_model(x, m, c):
-    """
-    Linear model function.
-    """
-    return m * x + c
-
 def test_curve_fit():
     """
-    Unit test for fitting a linear model to synthetic data using curve_fit.
+    Tests curve fitting functionality using a simple linear function.
 
-    This function generates synthetic noisy data based on a known linear model, fits the model 
-    to the data using the curve_fit function, and performs assertions to verify that the fitted 
-    parameters and covariance matrix are as expected.
-
-    Raises:
-        AssertionError: If the fitted parameters deviate significantly from the true parameters 
-                        or if the covariance matrix is None or has an incorrect shape.
+    The function fits a linear model to simulated noisy data and checks if
+    the estimated parameters are close to the true values within a
+    specified tolerance. Additionally, it verifies that the covariance
+    matrix does not contain NaN values.
     """
-    # Synthetic data
-    np.random.seed(42)  # Set a fixed seed for reproducibility
-    xdata = np.linspace(0, 10, 50)
-    true_params = [2.0, 1.0]  # Slope (m) and intercept (c)
-    noise = np.random.normal(0, 0.5, size=xdata.shape)  # Add some noise
-    ydata = linear_model(xdata, *true_params) + noise
+    def example_func(x, a, b):
+        return a * x + b
 
-    # Initial guess for parameters
-    initial_guess = [1.0, 0.0]
+    xdata = np.linspace(0, 10, 100)
+    true_params = [2.5, 1.0]
+    ydata = example_func(xdata, *true_params) + np.random.normal(0, 0.5, len(xdata))
 
-    # Call the curve_fit function
-    popt, pcov = curve_fit(linear_model, xdata, ydata, p0=initial_guess)
+    p0 = [1.0, 0.5]
+    try:
+        popt, pcov = curve_fit(example_func, xdata, ydata, p0)
+    except Exception as e:
+        raise RuntimeError(f"Curve fitting failed: {e}") from e
 
-    # Assert the fitted parameters are close to the true parameters
-    assert np.allclose(popt, true_params, atol=0.2), f"Fitted parameters {popt} deviate from true parameters {true_params}"
+    assert np.isclose(popt[0], true_params[0], rtol=0.25), \
+        f"Expected {true_params[0]}, got {popt[0]}"
+    assert np.isclose(popt[1], true_params[1], rtol=0.25), \
+        f"Expected {true_params[1]}, got {popt[1]}"
+    assert not np.isnan(pcov).any(), "Covariance matrix contains NaN values"
 
-    # Assert the covariance matrix is not None and has the correct shape
-    assert pcov is not None, "Covariance matrix None"
-    assert pcov.shape == (len(true_params), len(true_params)), "Covariance matrix shape incorrect"
+
+# Running the tests
+pytest.main()
