@@ -93,64 +93,49 @@ def generate_data(func, x_range, params, noise_level=0):
         y += np.random.normal(0, noise_level, size=len(x))
     return pd.DataFrame({'x': x, 'y': y})
 
-def non_linear_fit(data, model_func, initial_guess, config):
+def test_non_linear_fit():
     """
-    Perform non-linear fitting using gradient descent.
-
-    Parameters:
-        data (pandas.DataFrame): Dataframe containing x and y values.
-        model_func (callable): The model function to fit.
-        initial_guess (list): Initial guess for the parameters.
-        config (dict): Configuration dictionary with keys:
-            - step_power: Specifies the step size as 2^n.
-            - max_iter: Maximum number of iterations.
-            - tol: Tolerance for convergence.
-
-    Returns:
-        tuple: Optimized parameters and a list of residuals.
+    Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
     """
-    # Extract configuration values
-    step_power = config.get("step_power", 4)
-    max_iter = config.get("max_iter", 1000)
-    tol = config.get("tol", 1e-6)
+    # Generate clean data
+    data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
 
-    # Validate data
-    if data.isna().any().any():
-        raise ValueError("Input data contains NaN values. Please clean the data before fitting.")
+    # Add NaN values and clean them
+    data.loc[10, 'x'] = np.nan
+    data.loc[20, 'y'] = np.nan
+    clean_data = data.dropna()
 
-    params = np.array(initial_guess, dtype=np.float64)
-    prev_residual_sum = np.inf
+    # Normalize data
+    clean_data['x'] = clean_data['x'] / max(clean_data['x'])
+    clean_data['y'] = clean_data['y'] / max(clean_data['y'])
 
-    # Initialize step size with a cap for stability
-    step_size = min(2 ** step_power, 1e-2)
+    # Configurations for fitting
+    config = {"step_power": 2, "max_iter": 1000, "tol": 1e-6}
 
-    for iteration in range(max_iter):
-        # Compute residuals
-        residuals = data['y'] - model_func(data['x'], *params)
+    # Perform non-linear fitting
+    try:
+        params, residuals = non_linear_fit(
+            clean_data, quadratic_model, initial_guess=[1, 1, 1], config=config
+        )
+    except ValueError as e:
+        print(f"ValueError during fitting: {e}")
+        return
+    except TypeError as e:
+        print(f"TypeError during fitting: {e}")
+        return
 
-        # Compute gradients
-        gradients = np.array([
-            -2 * np.sum(residuals * model_func(data['x'], *params) / len(data['x']))
-        ])
-
-        # Update parameters
-        params -= step_size * gradients
-
-        # Compute current residual sum
-        residual_sum = np.sum(residuals ** 2)
-
-        # Log iteration details (optional, for debugging)
-        if iteration % 10 == 0:
-            print(f"Iteration {iteration}: Residual Sum = {residual_sum}")
-
-        # Check convergence
-        if np.abs(prev_residual_sum - residual_sum) < tol:
-            print(f"Converged after {iteration} iterations.")
-            break
-
-        prev_residual_sum = residual_sum
-
-    return params, residuals.tolist()
+    # Assertions
+    assert len(params) == 3, "Expected 3 parameters."
+    assert isinstance(residuals, list), "Residuals should be a list."
+    assert np.isclose(params[0], 1, atol=0.1), (
+        f"Expected param 0 close to 1, got {params[0]}"
+    )
+    assert np.isclose(params[1], 2, atol=0.1), (
+        f"Expected param 1 close to 2, got {params[1]}"
+    )
+    assert np.isclose(params[2], 3, atol=0.1), (
+        f"Expected param 2 close to 3, got {params[2]}"
+    )
 
 def plot_fit(data, model_func, params):
     """
