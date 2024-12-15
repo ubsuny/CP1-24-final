@@ -133,12 +133,6 @@ def test_generate_data():
 def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
-
-    This test:
-    - Generates data using a quadratic model.
-    - Performs non-linear fitting with an initial guess and a specific step size.
-    - Asserts that the returned parameters have the correct length and are close to expected values.
-    - Verifies that residuals are returned as a list.
     """
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
     params, residuals = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], step_power=4)
