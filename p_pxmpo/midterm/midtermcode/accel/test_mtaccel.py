@@ -17,7 +17,7 @@ from mtaccelfuncts import read_acceleration, check_direction
 sys.path.append('/workspaces/FORKCP1-24-final/p_pxmpo/midterm/midtermcode/accel')
 
 @pytest.fixture
-def tmp_sample_csv_file():
+def temp_csv_file():
     """
     Fixture to create a temporary CSV file for testing `read_acceleration`.
     
@@ -50,7 +50,8 @@ def sample_y_values():
     """
     return [0.5, 2.0, -1.5, 0.2]
 
-def test_read_acceleration(tmp_sample_csv_file):
+# pylint: disable=redefined-outer-name
+def test_read_acceleration(temp_csv_file):
     """
     Test for `read_acceleration` function.
     
@@ -59,7 +60,7 @@ def test_read_acceleration(tmp_sample_csv_file):
     Args:
         sample_csv_file (str): The path to the temporary CSV file provided by the fixture.
     """
-    y_values = read_acceleration(tmp_sample_csv_file)
+    y_values = read_acceleration(temp_csv_file)
     assert y_values == [0.5, 2.0, -1.5, 0.2]
 
 def test_check_direction_up():
@@ -93,6 +94,5 @@ def test_check_direction_no_significant_trend():
     result = check_direction(y_values)
     assert result == "No significant trend"
 
-# Run the tests if this file is executed directly
-if __name__ == "__main__":
-    pytest.main()
+# Run the tests
+pytest.main()
