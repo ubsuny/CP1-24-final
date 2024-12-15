@@ -109,24 +109,43 @@ def non_linear_fit(data, model_func, initial_guess, config):
     Returns:
         tuple: Optimized parameters and a list of residuals.
     """
+    # Extract configuration values
     step_power = config.get("step_power", 4)
     max_iter = config.get("max_iter", 1000)
     tol = config.get("tol", 1e-6)
 
+    # Validate data
+    if data.isna().any().any():
+        raise ValueError("Input data contains NaN values. Please clean the data before fitting.")
+
     params = np.array(initial_guess, dtype=np.float64)
     prev_residual_sum = np.inf
 
-    for _ in range(max_iter):
-        # Compute residuals and gradients
+    # Initialize step size with a cap for stability
+    step_size = min(2 ** step_power, 1e-2)
+
+    for iteration in range(max_iter):
+        # Compute residuals
         residuals = data['y'] - model_func(data['x'], *params)
-        gradients = -2 * np.dot(residuals, data['x']) / len(data['x'])
+
+        # Compute gradients
+        gradients = np.array([
+            -2 * np.sum(residuals * model_func(data['x'], *params) / len(data['x']))
+        ])
 
         # Update parameters
-        params -= (2 ** step_power) * gradients
+        params -= step_size * gradients
+
+        # Compute current residual sum
+        residual_sum = np.sum(residuals ** 2)
+
+        # Log iteration details (optional, for debugging)
+        if iteration % 10 == 0:
+            print(f"Iteration {iteration}: Residual Sum = {residual_sum}")
 
         # Check convergence
-        residual_sum = np.sum(residuals**2)
         if np.abs(prev_residual_sum - residual_sum) < tol:
+            print(f"Converged after {iteration} iterations.")
             break
 
         prev_residual_sum = residual_sum
