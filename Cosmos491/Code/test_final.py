@@ -134,39 +134,45 @@ def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
     """
-    # Generate test data (quadratic model)
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
 
-    # Configuration for fitting
+    # Add config for non_linear_fit
     config = {"step_power": 4, "max_iter": 1000, "tol": 1e-6}
 
-    # Perform non-linear fitting
+    # Ensure proper scaling of data
+    data['x'] = data['x'] / max(data['x'])
+    data['y'] = data['y'] / max(data['y'])
+
+    # Use config for non_linear_fit
     params, residuals = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], config=config)
 
-    # Assert parameter accuracy
+    # Assertions
     assert len(params) == 3
+    assert isinstance(residuals, list)
     assert np.isclose(params[0], 1, atol=0.1)
     assert np.isclose(params[1], 2, atol=0.1)
     assert np.isclose(params[2], 3, atol=0.1)
 
-    # Assert residuals are returned as a list
-    assert isinstance(residuals, list)
-
 def test_plot_fit():
     """
     Test the plot_fit function to ensure it generates a plot without errors.
-
-    This test:
-    - Generates data using a quadratic model.
-    - Fits the data using non_linear_fit to obtain model parameters.
-    - Attempts to plot the data and the fitted model.
-    - Fails the test if any exception is raised during the plotting process.
     """
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
-    params, _ = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], step_power=4)
+
+    # Add config for non_linear_fit
+    config = {"step_power": 4, "max_iter": 1000, "tol": 1e-6}
+
+    # Scale the data
+    data['x'] = data['x'] / max(data['x'])
+    data['y'] = data['y'] / max(data['y'])
+
+    # Use config for non_linear_fit
+    params, _ = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], config=config)
+
+    # Ensure no exceptions during plotting
     try:
         plot_fit(data, quadratic_model, params)
-    except (ValueError, RuntimeError) as e:
+    except Exception as e:
         pytest.fail(f"Plotting failed with exception: {e}")
 
 def test_check_equidistant():
