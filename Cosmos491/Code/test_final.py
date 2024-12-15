@@ -134,13 +134,23 @@ def test_non_linear_fit():
     """
     Test the non_linear_fit function to ensure it performs non-linear fitting correctly.
     """
+    # Generate test data (quadratic model)
     data = generate_data(quadratic_model, (0, 10, 100), (1, 2, 3), noise_level=0)
-    params, residuals = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], step_power=4)
+
+    # Configuration for fitting
+    config = {"step_power": 4, "max_iter": 1000, "tol": 1e-6}
+
+    # Perform non-linear fitting
+    params, residuals = non_linear_fit(data, quadratic_model, initial_guess=[0, 0, 0], config=config)
+
+    # Assert parameter accuracy
     assert len(params) == 3
-    assert isinstance(residuals, list)
     assert np.isclose(params[0], 1, atol=0.1)
     assert np.isclose(params[1], 2, atol=0.1)
     assert np.isclose(params[2], 3, atol=0.1)
+
+    # Assert residuals are returned as a list
+    assert isinstance(residuals, list)
 
 def test_plot_fit():
     """
