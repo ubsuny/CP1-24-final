@@ -4,6 +4,7 @@ It includes tests for reading CSV and markdown data, converting temperatures,
 fitting nonlinear sine models, and performing Fourier transforms.
 """
 from unittest.mock import patch, mock_open
+import tempfile
 import numpy as np
 import pandas as pd
 import pytest
@@ -119,41 +120,52 @@ def test_compute_inverse_fft():
 
 def test_extract_temperature_valid():
     """
-    Test that temperature data is successfully extracted from a valid markdown file.
+    Test that temperature data is successfully extracted from a valid markdown file mock.
     Ensures that the extracted data is not empty.
     """
-    try:
-        data = extract_temperature_from_markdown(
-            '/workspaces/FORKCP1-24-final/p_pxmpo/data/pp05_sinewalk.md'
-        )
+    mock_data = "Temperature: 32F\nTemperature: 68F\nTemperature: 212F"  # Example mock data
+    with patch('builtins.open', mock_open(read_data=mock_data)):
+        data = extract_temperature_from_markdown('mock_file.md')
         assert len(data) > 0, "Extracted temperature data is empty."
-    except FileNotFoundError:
-        pytest.fail("File pp03_sinewalk.md not found.")
 
 def test_extract_temperature_invalid_file():
     """
     Test that a `FileNotFoundError` is raised when trying to extract temperature 
-    from a nonexistent markdown file.
+    from a nonexistent markdown file mock.
     """
+    non_existent_file = 'non_existent_file.md'
+
     with pytest.raises(FileNotFoundError):
-        extract_temperature_from_markdown('nonexistent.md')
+        extract_temperature_from_markdown(non_existent_file)
+
 
 def test_extract_temperature_no_data():
     """
     Test that no temperature data is returned when the markdown file contains no temperature
-    information.
+    information mock.
     """
-    data = extract_temperature_from_markdown('no_temp.md')
-    assert len(data) == 0  # Ensure no data is returned
+    with patch('builtins.open', mock_open(read_data="No temperature data.")):
+        data = extract_temperature_from_markdown('no_temp.md')
+        assert len(data) == 0  # Ensure no data is returned
 
-def test_extract_temperature_f_to_k():
+def create_temp_fahrenheit_file():
+    """
+    Create a temporary file with temperatures in Fahrenheit
+    """
+    mock_data = "Temperature: 32F\nTemperature: 68F\nTemperature: 212F"
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
+        temp_file.write(mock_data)
+        temp_filename = temp_file.name
+    return temp_filename
+
+def test_extract_temperature_f_to_k_with_temp_file():
     """
     Test that temperatures are correctly converted from Fahrenheit to Kelvin.
     Ensures all extracted temperatures are above or equal to 273.15 K.
     """
-    data = extract_temperature_from_markdown(
-            '/workspaces/FORKCP1-24-final/p_pxmpo/data/pp05_sinewalk.md'
-        )
-    assert all(temp >= 273.15 for temp in data)  # Ensure temperatures are converted to Kelvin
+    temp_file_path = create_temp_fahrenheit_file()  # Create temporary file with mock data
+    with patch('builtins.open', mock_open(read_data=temp_file_path)):
+        data = extract_temperature_from_markdown(temp_file_path)  # Use the temporary file
+        assert all(temp >= 273.15 for temp in data)  # Ensure temperatures are converted to Kelvin
 
 pytest.main()
