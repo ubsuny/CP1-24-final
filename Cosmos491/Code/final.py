@@ -93,42 +93,55 @@ def generate_data(func, x_range, params, noise_level=0):
         y += np.random.normal(0, noise_level, size=len(x))
     return pd.DataFrame({'x': x, 'y': y})
 
-def non_linear_fit(data, model_func, initial_guess, step_power=4, max_iter=1000, tol=1e-6):
+def non_linear_fit(data, model_func, initial_guess, config):
     """
     Perform non-linear fitting using gradient descent.
-    
+
     Parameters:
         data (pandas.DataFrame): Dataframe containing x and y values.
         model_func (callable): The model function to fit.
         initial_guess (list): Initial guess for the parameters.
-        step_power (int): Specifies the step size as 2^n.
-        max_iter (int): Maximum number of iterations.
-        tol (float): Tolerance for convergence.
+        config (dict): Configuration dictionary with keys:
+            - step_power (int): Specifies the step size as 2^n.
+            - max_iter (int): Maximum number of iterations.
+            - tol (float): Tolerance for convergence.
 
     Returns:
         tuple: Optimized parameters and a list of residuals.
     """
+    step_size = float(2 ** config["step_power"])
+    max_iter = config["max_iter"]
+    tol = config["tol"]
+
     params = np.array(initial_guess, dtype=np.float64)
     prev_residual_sum = np.inf
-    
+
     for _ in range(max_iter):
-        # Compute gradients
-        gradients = compute_gradients(data, params, model_func)
-        
-        # Update parameters with controlled step size
-        step_size = 2 ** step_power / (np.linalg.norm(gradients) + 1e-8)
-        params -= step_size * gradients
-        
         # Compute residuals
-        residuals = data['y'] - model_func(data['x'], *params)
-        residual_sum = np.sum(residuals**2)
-        
+        residuals = data["y"] - model_func(data["x"], *params)
+
+        # Compute gradients using finite differences
+        gradients = []
+        for i in range(len(params)):
+            delta_params = params.copy()
+            delta_params[i] += 1e-6  # Small step for finite difference
+            grad = (
+                np.sum((data["y"] - model_func(data["x"], *delta_params)) ** 2)
+                - np.sum((data["y"] - model_func(data["x"], *params)) ** 2)
+            ) / 1e-6
+            gradients.append(grad)
+        gradients = np.array(gradients, dtype=np.float64)
+
+        # Update parameters
+        params -= step_size * gradients
+
         # Check for convergence
+        residual_sum = np.sum(residuals ** 2)
         if np.abs(prev_residual_sum - residual_sum) < tol:
             break
         prev_residual_sum = residual_sum
-    
-    return params, residuals.tolist()
+
+    return params, list(residuals)
 
 def plot_fit(data, model_func, params):
     """
