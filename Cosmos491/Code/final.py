@@ -117,14 +117,28 @@ def non_linear_fit(data, model_func, initial_guess, step_power=4):
 
     for _ in range(1000):  # Maximum iterations
         res = residuals(params)
-        grad = -2 * np.dot(res, data['x']) / len(data['x'])
-        params -= step_size * grad  # Update parameters
-
-        # Calculate residual sum to check convergence
         residual_sum = np.sum(res**2)
+
+        # Terminate if residual_sum is NaN
+        if np.isnan(residual_sum):
+            break
+
+        # Calculate gradient with numerical stability
+        grad = -2 * np.dot(res, data['x']) / (len(data['x']) + 1e-8)
+
+        # Update parameters
+        new_params = params - step_size * grad
+
+        # Adaptive step size
+        if residual_sum > prev_residual_sum:
+            step_size /= 2  # Reduce step size if residuals increase
+        else:
+            params = new_params
+            prev_residual_sum = residual_sum
+
+        # Convergence condition
         if np.abs(prev_residual_sum - residual_sum) < 1e-6:
             break
-        prev_residual_sum = residual_sum
 
     return params, res.tolist()
 
