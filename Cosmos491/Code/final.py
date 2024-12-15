@@ -112,14 +112,16 @@ def non_linear_fit(data, model_func, initial_guess, step_power=4):
         return data['y'] - predicted
 
     step_size = 2 ** step_power
-    params = np.array(initial_guess)
+    params = np.array(initial_guess, dtype=float)  # Ensure params are float64
     prev_residual_sum = np.inf
 
     for _ in range(1000):  # Maximum iterations
         res = residuals(params)
         grad = -2 * np.dot(res, data['x']) / len(data['x'])
-        params -= step_size * grad
-        residual_sum = np.sum(res ** 2)
+        params -= step_size * grad  # Update parameters
+
+        # Calculate residual sum to check convergence
+        residual_sum = np.sum(res**2)
         if np.abs(prev_residual_sum - residual_sum) < 1e-6:
             break
         prev_residual_sum = residual_sum
@@ -144,17 +146,18 @@ def plot_fit(data, model_func, params):
     plt.legend()
     plt.show()
 
-def check_equidistant(data: pd.Series) -> bool:
+def check_equidistant(data):
     """
-    Checks if the input data is equidistant.
+    Check if the input data is equidistant.
 
     Parameters:
-        data (pd.Series): A pandas Series representing the data points.
+        data (pandas.Series): Time series data.
 
     Returns:
         bool: True if the data is equidistant, False otherwise.
     """
-    time_diffs = np.diff(data.index)
+    time_diffs = np.diff(data.index.values)  # Get differences in time
+    time_diffs = time_diffs.astype('timedelta64[s]').astype(float)  # Convert to seconds
     return np.allclose(time_diffs, time_diffs[0])
 
 def compute_fft(data: np.ndarray) -> np.ndarray:
