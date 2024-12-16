@@ -146,8 +146,13 @@ def test_non_linear_fit():
     clean_data = data.dropna()
 
     # Normalize data for better convergence
-    clean_data['x'] = (clean_data['x'] - clean_data['x'].min()) / (clean_data['x'].max() - clean_data['x'].min())
-    clean_data['y'] = (clean_data['y'] - clean_data['y'].min()) / (clean_data['y'].max() - clean_data['y'].min())
+    x_min = clean_data['x'].min()
+    x_max = clean_data['x'].max()
+    clean_data['x'] = (clean_data['x'] - x_min) / (x_max - x_min)
+
+    y_min = clean_data['y'].min()
+    y_max = clean_data['y'].max()
+    clean_data['y'] = (clean_data['y'] - y_min) / (y_max - y_min)
 
     # Configuration for non_linear_fit
     quadratic_fit_config = {"step_power": 1, "max_iter": 1500, "tol": 1e-4}
