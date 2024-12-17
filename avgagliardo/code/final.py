@@ -9,6 +9,7 @@ import os
 import re
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def convert_f_to_k(f):
     """
@@ -113,9 +114,7 @@ def filter_markdown_files(directory_path, filter_string):
 
     return sorted_files
 
-
-
-
+# task 4
 def degrees_to_meters(lat, lon):
     """
     Convert latitude and longitude in degrees to meters.
@@ -168,66 +167,59 @@ def resample_to_2n_segments(data: pd.DataFrame, n: int) -> pd.DataFrame:
 
     return resampled_data
 
-def sine_fit(x, y, freq_grid=100):
+def sine_fit(x, y):
     """
-    Fit a sine wave to the given data with optimized frequency, amplitude, phase,
-    and offset. Uses a grid search for frequency optimization.
+    Fit a sine wave to the given data with optimized frequency, amplitude, phase, and offset.
 
     Args:
         x (np.array): Input x values (time or distance).
         y (np.array): Input y values.
-        freq_grid (int): Number of frequency grid points to search over.
 
     Returns:
-        dict: Optimized sine wave parameters:
-              - 'amplitude': Amplitude of the sine wave
-              - 'frequency': Optimized frequency
-              - 'phase': Phase shift
-              - 'offset': Vertical offset
+        dict: Fitted sine wave parameters: amplitude, frequency, phase, and offset.
     """
-    params = {
-        'freq_min': 1 / (2 * (x[-1] - x[0])),
-        'freq_max': 5 / (2 * (x[-1] - x[0])),
-        'best': {'error': np.inf, 'frequency': None, 'coeffs': []},
-        'grid': []
-    }
+    # Remove the mean to simplify fitting
+    y_mean = np.mean(y)
+    y_centered = y - y_mean
 
-    def sine_basis(f, x):
-        """Generate sine and cosine basis for a given frequency."""
-        return np.vstack([
-            np.sin(2 * np.pi * f * x),
-            np.cos(2 * np.pi * f * x),
-            np.ones_like(x)
-        ]).T
+    # Approximate frequency: Assume signal completes 2 oscillations
+    t = x[-1] - x[0]
+    freq_estimate = 2 / t
 
-    # Generate frequency grid
-    params['grid'] = list(np.linspace(params['freq_min'], params['freq_max'], freq_grid))
+    # Generate sine and cosine components at the estimated frequency
+    sine = np.sin(2 * np.pi * freq_estimate * x)
+    cosine = np.cos(2 * np.pi * freq_estimate * x)
 
-    # Search for best frequency
-    for f in params['grid']:
-        x_upper = sine_basis(f, x)
-        coeffs = np.linalg.lstsq(x_upper, y, rcond=None)[0]
-        error = np.sum((y - x_upper @ coeffs) ** 2)
-        if error < params['best']['error']:
-            params['best']['error'] = error
-            params['best']['frequency'] = f
-            params['best']['coeffs'] = coeffs.tolist()
+    # Solve for coefficients using least squares
+    a = np.column_stack((sine, cosine))
+    coeffs, _, _, _ = np.linalg.lstsq(a, y_centered, rcond=None)
+    a_sin, a_cos = coeffs
 
-    # Extract optimized parameters
-    coeffs = params['best']['coeffs'] if len(params['best']['coeffs']) == 3 else [0.0, 0.0, 0.0]
-    a_sin, a_cos, offset = coeffs
-
+    # Calculate amplitude and phase
     amplitude = np.sqrt(a_sin**2 + a_cos**2)
     phase = np.arctan2(a_cos, a_sin)
 
+    # Return results
     return {
         'amplitude': amplitude,
-        'frequency': params['best']['frequency'],
-        'phase': phase,
-        'offset': offset
+        'frequency': freq_estimate,
+        'phase': phase % (2 * np.pi),
+        'offset': y_mean
     }
 
+def check_equidistant_x(x_values: np.ndarray, tolerance: float = 1e-6) -> bool:
+    """
+    Check if the x values are equidistant within a specified tolerance.
 
+    Args:
+    x_values (np.ndarray): Array of x values.
+    tolerance (float): Allowable deviation for equidistant checks.
+
+    Returns:
+    bool: True if x values are equidistant, False otherwise.
+    """
+    diffs = np.diff(x_values)  # Compute differences between consecutive x values
+    return np.all(np.abs(diffs - diffs[0]) <= tolerance)
 
 
 def rotate_to_x_axis(data: pd.DataFrame,
@@ -293,11 +285,10 @@ def rotate_to_x_axis(data: pd.DataFrame,
 
     return rotated_df
 
-
 def prepare_and_fit(data, n=6, resample=False):
     """
-    Prepares the input data by rotating it to align with the x-axis, optionally resampling it,
-    and fitting a sine curve using a nonlinear fitting method.
+    Prepares the input data by rotating it to align with the x-axis, optionally resampling
+    it, and fitting a sine curve using a nonlinear fitting method.
 
     Args:
         data (pd.DataFrame): Input DataFrame with at least three columns:
@@ -307,7 +298,8 @@ def prepare_and_fit(data, n=6, resample=False):
         n (int, optional): Determines the number of points to resample the data into as 2^n.
                            Default is 6, resulting in 64 points.
         resample (bool, optional): If True, resamples the data into 2^n equidistant segments
-                                   before applying the rotation and fitting. Default is False.
+            before applying the rotation and fitting. Default
+            is False.
 
     Returns:
         pd.DataFrame: A DataFrame with:
@@ -317,5 +309,135 @@ def prepare_and_fit(data, n=6, resample=False):
     """
     refit_data = rotate_to_x_axis(data, resample, n, fit_curve=True)
 
-    # return the data with fitted curve in the i=4 column
+    # Check if x values are equidistant
+    x_values = refit_data['x'].to_numpy()
+    if not check_equidistant_x(x_values):
+        print("Warning: x values are not equidistant!")
+    else:
+        print("x values are equidistant.")
+
     return refit_data
+
+
+# task 5
+def apply_fft(data: pd.DataFrame):
+    """
+    Apply FFT to the y values and return frequencies and FFT values.
+
+    Args:
+        data (pd.DataFrame): DataFrame with equidistant 'x' and 'y' values.
+
+    Returns:
+        tuple: (frequencies, fft_values) where frequencies are in units of 1/100 meters.
+    """
+    y = data['y'].to_numpy()
+    x = data['x'].to_numpy()
+    n = len(y)
+
+    # Calculate the spatial step size Δx
+    dx = np.mean(np.diff(x))  # Mean difference between consecutive x values
+
+    # Compute FFT
+    fft_values = np.fft.fft(y)
+    fft_frequencies = np.fft.fftfreq(n, d=dx)  # Frequencies in units of 1/meter
+
+    # Convert frequencies to units of 1/100 meters
+    fft_frequencies_scaled = fft_frequencies * 100
+
+    return fft_frequencies_scaled, fft_values
+
+def apply_ifft(fft_values: np.ndarray) -> np.ndarray:
+    """
+    Apply Inverse FFT to reconstruct the signal.
+
+    Args:
+        fft_values (np.ndarray): FFT values.
+
+    Returns:
+        np.ndarray: Reconstructed y values.
+    """
+    return np.fft.ifft(fft_values).real
+
+def plot_fft(frequencies: np.ndarray, fft_values: np.ndarray,
+             title: str = "FFT Spectrum", threshold: float = 0.01):
+    """
+    Plot the FFT spectrum showing the normalized amplitude vs frequency with intercepts
+    for the first and second harmonic peaks. Also plot the average between these peaks.
+
+    Args:
+        frequencies (np.ndarray): Array of frequency values from FFT.
+        fft_values (np.ndarray): Complex FFT values.
+        title (str): Title for the plot.
+        threshold (float): Threshold for normalized amplitude to determine insignificance.
+    """
+    # Create a dictionary to store data
+    fft_data = {}
+
+    # Take the positive half of the FFT
+    n = len(frequencies)
+    fft_data['positive_freqs'] = frequencies[:n // 2]
+    fft_data['positive_amplitudes'] = np.abs(fft_values)[:n // 2]  # Magnitude of FFT
+
+    # Normalize amplitudes
+    fft_data['normalized_amplitudes'] = (fft_data['positive_amplitudes'] /
+        fft_data['positive_amplitudes'].max())
+
+    # Apply threshold to cut off insignificant parts
+    significant_indices = fft_data['normalized_amplitudes'] >= threshold
+    fft_data['significant_freqs'] = fft_data['positive_freqs'][significant_indices]
+    fft_data['significant_amplitudes'] = fft_data['normalized_amplitudes'][significant_indices]
+
+    # Find the first harmonic (maximum amplitude)
+    max_index = np.argmax(fft_data['significant_amplitudes'])
+    fft_data['max_frequency'] = fft_data['significant_freqs'][max_index]
+    fft_data['max_amplitude'] = fft_data['significant_amplitudes'][max_index]
+
+    # Find the second harmonic (second largest peak)
+    sorted_indices = np.argsort(fft_data['significant_amplitudes'])[::-1]
+    second_max_index = sorted_indices[1]
+    fft_data['second_max_frequency'] = fft_data['significant_freqs'][second_max_index]
+    fft_data['second_max_amplitude'] = fft_data['significant_amplitudes'][second_max_index]
+
+    # Calculate average frequency between first and second harmonics
+    fft_data['average_frequency'] = (fft_data['max_frequency'] +
+        fft_data['second_max_frequency']) / 2
+
+    # Plot the FFT spectrum
+    plt.figure(figsize=(10, 6))
+    plt.plot(fft_data['significant_freqs'], fft_data['significant_amplitudes'],
+             label="Normalized Amplitude Spectrum", color="b")
+
+    # First harmonic intercepts
+    plt.axvline(x=fft_data['max_frequency'], color='g', linestyle='--',
+                label=f"1st Harmonic: {fft_data['max_frequency']:.3f}")
+    plt.axhline(y=fft_data['max_amplitude'], color='g', linestyle='--')
+    plt.scatter(fft_data['max_frequency'],
+        fft_data['max_amplitude'],
+        color='green', zorder=5)
+    plt.text(fft_data['max_frequency'], fft_data['max_amplitude'] - 0.05,
+             f"1st: {fft_data['max_frequency']:.3f}", color='green', fontsize=12)
+
+    # Second harmonic intercepts
+    plt.axvline(x=fft_data['second_max_frequency'], color='r', linestyle='--',
+                label=f"2nd Harmonic: {fft_data['second_max_frequency']:.3f}")
+    plt.axhline(y=fft_data['second_max_amplitude'], color='r', linestyle='--')
+    plt.scatter(fft_data['second_max_frequency'],
+        fft_data['second_max_amplitude'],
+        color='red', zorder=5)
+    plt.text(fft_data['second_max_frequency'], fft_data['second_max_amplitude'] - 0.05,
+             f"2nd: {fft_data['second_max_frequency']:.3f}", color='red', fontsize=12)
+
+    # Average frequency intercept
+    plt.axvline(x=fft_data['average_frequency'], color='purple', linestyle='--',
+                label=f"Avg: {fft_data['average_frequency']:.3f}")
+    plt.scatter(fft_data['average_frequency'], 0, color='purple', zorder=5)
+    plt.text(fft_data['average_frequency'], 0.05, f"Avg: {fft_data['average_frequency']:.3f}",
+             color='purple', fontsize=12)
+
+    # Labels and title
+    plt.title(title)
+    plt.xlabel("Frequency (1/100 meters)")
+    plt.ylabel("Normalized Amplitude")
+    plt.grid()
+    plt.legend()
+    plt.show()
