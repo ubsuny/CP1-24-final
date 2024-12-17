@@ -178,23 +178,6 @@ def test_sort_filenames():
     # Edge case: single file
     assert sort_filenames(["file_42.md"]) == ["file_42.md"]
 
-@pytest.fixture
-def mock_directory(tmpdir):
-    """
-    Fixture to create a temporary directory with markdown files for testing.
-    """
-    filenames = [
-        "report_1.md",
-        "report_2.md",
-        "notes_1.md",
-        "summary_3.md",
-        "readme.txt",  # Non-markdown file
-        "report_final.md"
-    ]
-    for fname in filenames:
-        (tmpdir / fname).write("content")
-    return tmpdir
-
 # Pytest main hook
 if __name__ == "__main__":
     pytest.main()
