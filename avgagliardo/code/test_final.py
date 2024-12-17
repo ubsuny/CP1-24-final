@@ -1,3 +1,9 @@
+
+"""
+test_final.py
+
+Tests the final.py module's functionality.
+"""
 import pytest
 
 from final import convert_f_to_k
