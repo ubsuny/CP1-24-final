@@ -8,8 +8,14 @@ import tempfile
 import os
 import pytest
 
+# Task 1 tests
 from final import convert_f_to_k
+# Task 2 tests
 from final import parse_markdown
+# Task 3 tests
+from final import filter_markdown_files
+# Task 4 tests
+from final import sort_filenames
 
 def test_convert_f_to_k():
     """
@@ -95,6 +101,100 @@ def test_parse_markdown():
         finally:
             # Clean up: Delete the temporary file
             os.remove(temp_file_path)
+
+def test_filter_markdown_files():
+    """
+    Test the filter_markdown_files function.
+    """
+    # create a temp directory with test markdown files
+    with tempfile.TemporaryDirectory() as temp_dir:
+        filenames = [
+            "AVG001_gps_sine_walk_0.md",
+            "AVG002_gps_sine_walk_1.md",
+            "README.md",
+            "NOTES_summary.md",
+        ]
+
+        # Create the files in the temp directory
+        for filename in filenames:
+            with open(os.path.join(temp_dir, filename), 'w', encoding="utf-8") as temp_file:
+                temp_file.close()
+            # open(os.path.join(temp_dir, filename), 'w').close()
+
+        # Test filtering with 'sine_walk' string
+        result = filter_markdown_files(temp_dir, "sine_walk")
+        assert sorted(result) == ["AVG001_gps_sine_walk_0.md", "AVG002_gps_sine_walk_1.md"]
+
+        # Test filtering with 'NOTES'
+        result = filter_markdown_files(temp_dir, "NOTES")
+        assert result == ["NOTES_summary.md"]
+
+        # Test filtering with a non-matching string
+        result = filter_markdown_files(temp_dir, "nonexistent")
+        assert result == []
+
+def test_sort_filenames_with_non_numeric_suffix():
+    """
+    Test that sort_filenames handles filenames with non-numeric suffixes correctly.
+    """
+    filenames = [
+        "file_10.md",
+        "file_2.md",
+        "file_final.md",
+        "file_1.md",
+    ]
+    expected_output = [
+        "file_1.md",
+        "file_2.md",
+        "file_10.md",
+        "file_final.md",  # Non-numeric filename appears last
+    ]
+    assert sort_filenames(filenames) == expected_output
+
+def test_sort_filenames():
+    """
+    Test that sort_filenames sorts filenames based on their trailing numeric values.
+    """
+    # Sample unsorted filenames
+    filenames = [
+        "file_10.md",
+        "file_2.md",
+        "file_1.md",
+        "file_20.md",
+    ]
+    # Expected sorted order
+    expected_output = [
+        "file_1.md",
+        "file_2.md",
+        "file_10.md",
+        "file_20.md",
+    ]
+    # Test sorting
+    assert sort_filenames(filenames) == expected_output
+
+    # Edge case: empty list
+    assert sort_filenames([]) == []
+
+    # Edge case: single file
+    assert sort_filenames(["file_42.md"]) == ["file_42.md"]
+
+@pytest.fixture
+def mock_directory(tmpdir):
+    """
+    Fixture to create a temporary directory with markdown files for testing.
+    """
+    filenames = [
+        "report_1.md",
+        "report_2.md",
+        "notes_1.md",
+        "summary_3.md",
+        "readme.txt",  # Non-markdown file
+        "report_final.md"
+    ]
+    for fname in filenames:
+        (tmpdir / fname).write("content")
+    return tmpdir
+
 # Pytest main hook
 if __name__ == "__main__":
     pytest.main()
