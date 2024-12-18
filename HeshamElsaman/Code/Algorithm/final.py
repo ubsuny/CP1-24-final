@@ -6,7 +6,7 @@ import os
 import math
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import mercator_projection_functions as mpf
 
 # Temperature Conversion
@@ -239,3 +239,24 @@ def xy_plot(horizontal, vertical, title, horizontal_label, vertical_label,
     plt.ylabel(vertical_label)
     plt.grid(True)
     plt.show()
+
+# Trimming the data
+def data_trim(data, start_index=0):
+    """
+    Trims the data to the closest power of 2 starting from a given index.
+
+    Parameters:
+        Inputs:
+            data (list): The input data to be trimmed.
+            start_index (number): The index from which to start trimming.
+
+        Outputs:
+            trimmed_data: The trimmed data as a list or numpy array.
+    """
+    if start_index < 0 or start_index >= len(data):
+        raise ValueError("start_index must be within the bounds of the data length.")
+    available_length = len(data) - start_index
+    closest_power_of_2 = 2 ** int(np.floor(np.log2(available_length)))
+    end_index = start_index + closest_power_of_2
+    trimmed_data = data[start_index:end_index]
+    return trimmed_data
