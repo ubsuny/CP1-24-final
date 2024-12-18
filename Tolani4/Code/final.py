@@ -50,18 +50,20 @@ def parse_temperature(md_file):
 
 
 # List markdown files based on a filter string in the filename
-def list_md_files(directory, filter_name):
+def list_md_files(directory, filter_name="sinewalk"):
     """
-    Generates a list of markdown files based on a filename filter.
+    Generates a list of markdown files based on a filter string in the filename.
 
     Args:
     directory (str): Path to the directory.
-    filter_name (str): Filter string to match files.
+    filter_name (str): Filter string to match files (default is 'sinewalk').
 
     Returns:
     list: List of markdown files matching the filter.
     """
-    return [f for f in os.listdir(directory) if f.endswith('.md') and filter_name in f]
+    all_md_files = [f for f in os.listdir(directory) if f.endswith(".md")]
+    filtered_files = [os.path.join(directory, f) for f in all_md_files if filter_name in f]
+    return filtered_files
 
 
 # Read CSV data and extract relevant columns
@@ -101,66 +103,65 @@ def sine_wave(t, A, omega, phi, C):
 
 
 # Fit sine wave to data
-def fit_sine_wave(time, data, step_number=2):
+def fit_sine_wave(time, data, p0=None, step_number=2):
     """
     Fits a sine wave to the data.
 
     Args:
     time (array): Time values.
     data (array): Data values to fit.
-    step_number (int): Step number for sine wave fitting.
+    p0 (array, optional): Initial guess for the parameters [A, omega, phi, C]. 
+                          If None, it is calculated from the data.
+    step_number (int): Step number for sine wave fitting (default is 2).
 
     Returns:
     tuple: Fitted parameters (Amplitude, Angular Frequency, Phase, Vertical Shift).
     """
-    # Initial guess for A, omega, phi, C
-    guess_amplitude = np.max(data) - np.min(data)
-    guess_frequency = step_number / (time[-1] - time[0])
-    guess_phase = 0
-    guess_offset = np.mean(data)
-    
-    popt, _ = curve_fit(sine_wave, time, data, p0=[guess_amplitude, guess_frequency, guess_phase, guess_offset])
+    # Use provided p0 or calculate the default initial guess
+    if p0 is None:
+        guess_amplitude = np.max(data) - np.min(data)  # Peak-to-peak amplitude
+        guess_frequency = step_number / (time[-1] - time[0])  # Approximate frequency based on time span
+        guess_phase = 0  # Phase guess
+        guess_offset = np.mean(data)  # Offset as mean value of data
+        p0 = [guess_amplitude, guess_frequency, guess_phase, guess_offset]
+
+    # Fit the sine wave to the data
+    popt, _ = curve_fit(sine_wave, time, data, p0=p0, maxfev=5000)  # Added maxfev=5000
     return popt
 
 
 # Compute FFT of signal and check for equidistant data
 def compute_fft(signal, time):
-    """
-    Computes the FFT of a signal and checks for equidistant data.
-
-    Args:
-    signal (array): Signal to analyze.
-    time (array): Time values.
-
-    Returns:
-    tuple: Frequencies and FFT values.
-    """
     # Check if time data is equidistant
     time_diff = np.diff(time)
     if not np.allclose(time_diff, time_diff[0]):
-        raise ValueError("Time data is not equidistant")
-
-    # Compute FFT
-    N = len(time)
+        raise ValueError("Time data is not equidistant. Interpolation will be applied.")
+    
+    # Perform FFT on the signal
+    N = len(signal)
     dt = time[1] - time[0]
     fft_vals = np.fft.fft(signal)
     freqs = np.fft.fftfreq(N, dt)
-    return freqs, np.abs(fft_vals)
+    
+    # Return only the positive frequencies (real signals are symmetric)
+    positive_freqs = freqs[:N//2]
+    positive_fft_vals = fft_vals[:N//2]
+    
+    return positive_freqs, positive_fft_vals
+
 
 
 # Calculate the frequency axis in useful units (1/100m)
-def calculate_frequency_axis(signal, time):
-    """
-    Calculates the frequency axis in useful units (1/100m).
-
-    Args:
-    signal (array): Signal to analyze.
-    time (array): Time values.
-
-    Returns:
-    array: Frequency axis in 1/100m units.
-    """
-    N = len(time)
-    dt = time[1] - time[0]
-    freqs = np.fft.fftfreq(N, dt)
-    return freqs * 100  # Convert to 1/100m units
+def calculate_frequency_axis(displacement, time):
+    # Calculate frequency axis in Hz (1/seconds) using pure Python
+    N = len(displacement)
+    dt = time[1] - time[0]  # Time step
+    
+    # Calculate the frequency axis using FFT-like behavior without numpy
+    freqs = [i / (N * dt) for i in range(N // 2)]
+    
+    # Convert the frequencies into 1/100 meters
+    # Frequency spacing: Should be the inverse of the time step, scaled by 1/100 meters
+    freq_100m = [f * (1 / 100) for f in freqs]  # This converts frequency to 1/100 meters
+    
+    return freq_100m

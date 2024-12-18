@@ -83,10 +83,26 @@ def test_compute_fft():
     assert np.isclose(fft_vals[0], 0, atol=1e-1)  # Check if DC component is small
 
 # Test calculate_frequency_axis function
+# Test for calculate_frequency_axis function
 def test_calculate_frequency_axis():
-    time = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-    signal = np.sin(time)
-    freqs = calculate_frequency_axis(signal, time)
-    assert len(freqs) == len(signal)
-    assert freqs[0] == 0  # The first frequency should be zero
-
+    # Test case with a simple displacement signal (sinusoidal signal)
+    time = [0.0, 1.0, 2.0, 3.0, 4.0]  # Sample time array (5 time steps)
+    displacement = [0.0, 1.0, 0.0, -1.0, 0.0]  # Simple sinusoidal signal for displacement
+    
+    # Compute the frequency axis using the function
+    freqs_100m = calculate_frequency_axis(displacement, time)
+    
+    # Check that the length of the frequency axis is half of the displacement signal length
+    assert len(freqs_100m) == len(displacement) // 2, f"Expected {len(displacement) // 2} frequencies, got {len(freqs_100m)}"
+    
+    # Check that the first frequency is zero (DC component)
+    assert freqs_100m[0] == 0, f"Expected first frequency to be 0, got {freqs_100m[0]}"
+    
+    # Check that all frequencies are non-negative (they should be positive frequencies)
+    assert all(f >= 0 for f in freqs_100m), f"Frequencies contain negative values: {freqs_100m}"
+    
+    # Check that the spacing between the frequencies is consistent
+    frequency_spacing = freqs_100m[1] - freqs_100m[0]
+    assert all(abs(freqs_100m[i+1] - freqs_100m[i] - frequency_spacing) < 1e-10 for i in range(len(freqs_100m)-1)), "Frequencies are not evenly spaced"
+    
+    
