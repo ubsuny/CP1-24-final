@@ -1,9 +1,81 @@
 '''This module contains all of the functions necessary to complete 
-the Final Exam for Computational Physics 1, 2024.'''
+the Final Exam for Computational Physics 1, 2024.
+
+My curvefit function that I could NOT get to work:
+
+def curvefit(fitting_func, param_guess, xdata, ydata, yunc, learning_rate=1e-4,
+             tol=1e-6, max_iter=10000):
+    
+    Perform nonlinear curve fitting for input data with uncertainties 
+    and a fitting function.
+
+    Parameters:
+        - fitting_func (callable): The function to fit, f(x, *args)
+        - param_guess (list): Initial guesses for the parameters
+        - xdata (array): Independent variable data
+        - ydata (array): Dependent variable data
+        - yunc (array): Uncertainties in ydata
+        - learning_rate (float): Step size for parameter updates
+        - tol (float): Tolerance for stopping criteria
+        - max_iter (int): Maximum number of iterations
+
+    Returns:
+        - optimized_args (list): Optimized parameters
+        - sigma_args (list): Uncertainties in the optimized parameters
+    
+
+    #Make Arrays:
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
+    yunc = np.array(yunc)
+
+    # Number of data points and parameters
+    n = len(xdata)
+    p = len(param_guess)
+    if n < 2:
+        print("Error: Need more data!")
+    # Compute weights from uncertainties in y
+    weights = 1 / (yunc**2)
+    # Initialize parameters
+    params = np.array(param_guess, dtype=float)
+    # Gradient descent loop
+    for iteration in range(max_iter):
+        # Compute residuals and weighted sum of squared residuals
+        residuals = ydata - fitting_func(xdata, *params)
+        weighted_residuals = weights * residuals**2
+        # Compute gradients (partial derivatives with respect to parameters)
+        gradients = np.zeros(p)
+        for i in range(p):
+            # Perturb parameter i slightly
+            delta = 1e-3
+            params_perturbed = params.copy()
+            params_perturbed[i] += delta
+            residuals_perturbed = ydata - fitting_func(xdata, *params_perturbed)
+            # Numerical gradient
+            gradients[i] = -2 * np.sum(weights * residuals *
+                                       (residuals_perturbed - residuals) / delta)
+        # Update parameters using gradient descent
+        params -= learning_rate * gradients
+        # Check for convergence
+        if np.linalg.norm(gradients) < tol:
+            break
+        raise ValueError("Error: Maximum iterations reached without convergence.")
+    # Estimate parameter uncertainties (approximation)
+    jacobian = np.zeros((n, p))  # Jacobian matrix
+    for i in range(p):
+        delta = 1e-5
+        params_perturbed = params.copy()
+        params_perturbed[i] += delta
+        jacobian[:, i] = (fitting_func(xdata, *params_perturbed) -
+                           fitting_func(xdata, *params)) / delta
+    covariance_matrix = np.linalg.inv(jacobian.T @ np.diag(weights) @ jacobian)
+    sigma_args = np.sqrt(np.diag(covariance_matrix))
+    return params, sigma_args
+    '''
 
 import os
 import numpy as np
-from scipy.optimize import curve_fit
+import scipy
 
 def fahrenheit_to_kelvin(fahrenheit):
     '''This function converts a given temperature in Degrees Fahrenheit 
@@ -48,7 +120,7 @@ def list_files(directory, search_string, file_extension):
         list: A list of file paths matching the search criteria.
     """
     matching_files = []
-    for root, dirs, files in os.walk(directory):
+    for root, _, files in os.walk(directory):
         for file in files:
             if search_string in file and file.endswith(file_extension):
                 matching_files.append(os.path.join(root, file))
@@ -59,8 +131,6 @@ def curvefitlin(xdata, ydata, xunc, yunc):
     Does nonlinear curve fitting for input data with uncertainty and function to be fit
 
     Parameters:
-        -func: The fitting function
-        -*args: Paremeters of func
         -xdata: x-data to be fit
         -ydata: y-data to be fit
         -xunc: uncertainty in x-data
@@ -70,125 +140,36 @@ def curvefitlin(xdata, ydata, xunc, yunc):
         -The fitting parameters of func
     '''
 
-    n = len(xdata)
-
-    if n<2:
+    if len(xdata)<2:
         print('Error: Need more data!')
-        exit()
 
-    err = np.sum(np.sqrt(xunc**2+yunc**2))
-    S = np.sum(1/err**2)
-
-    if abs(S) < 0.00001 :
+    if abs(np.sum(1/np.sum(np.sqrt(xunc**2+yunc**2))**2)) < 0.00001 :
         print('Error: Denominator too small!')
-        exit()
 
-    S_x = np.sum(xdata/xunc)
-    S_y = np.sum(ydata/yunc)
+    sigma_x = np.sum(xdata/xunc)
+    sigma_y = np.sum(ydata/yunc)
 
-    t = (xdata - S_x/S)/err
-    S_tt = np.sum(t**2)
+    t = (xdata - sigma_x/np.sum(1/np.sum(np.sqrt(xunc**2+
+                                                 yunc**2))**2))/np.sum(np.sqrt(xunc**2+yunc**2))
+    sigma_tt = np.sum(t**2)
 
-    if abs(S_tt) < 0.00001:
-        print('Error: Dnominator S too small!')
-        exit()
-    
-    b = np.sum(t*ydata/err)/S_tt
-    a = (S_y - S_x*b)/S
-    sigma_a2 = (1+S_x**2/(S*S_tt))/S
-    sigma_b2 = 1/S_tt
+    if abs(sigma_tt) < 0.00001:
+        print('Error: Denominator S too small!')
+
+    b = np.sum(t*ydata/np.sum(np.sqrt(xunc**2+yunc**2)))/sigma_tt
+    a = (sigma_y - sigma_x*b)/np.sum(1/np.sum(np.sqrt(xunc**2+yunc**2))**2)
+    sigma_a2 = (1+sigma_x**2/(np.sum(1/np.sum(np.sqrt(xunc**2+yunc**2))**2)
+                              *sigma_tt))/np.sum(1/np.sum(np.sqrt(xunc**2+yunc**2))**2)
+    sigma_b2 = 1/sigma_tt
 
     if sigma_a2 < 0 or sigma_b2 < 0:
         print('Error: Negative Square Root')
-        exit()
-    
     sigma_a = np.sqrt(sigma_a2)
     sigma_b = np.sqrt(sigma_b2)
 
-    chi_squared = np.sum(((ydata-a-b*xdata)/err)**2)
+    chi_squared = np.sum(((ydata-a-b*xdata)/np.sum(np.sqrt(xunc**2+yunc**2)))**2)
 
     return a, b, sigma_a, sigma_b, chi_squared
-
-    import numpy as np
-
-def curvefit(fitting_func, param_guess, xdata, ydata, yunc, learning_rate=1e-4, tol=1e-6, max_iter=10000):
-    """
-    Perform nonlinear curve fitting for input data with uncertainties and a fitting function.
-
-    Parameters:
-        - fitting_func (callable): The function to fit, f(x, *args)
-        - param_guess (list): Initial guesses for the parameters
-        - xdata (array): Independent variable data
-        - ydata (array): Dependent variable data
-        - yunc (array): Uncertainties in ydata
-        - learning_rate (float): Step size for parameter updates
-        - tol (float): Tolerance for stopping criteria
-        - max_iter (int): Maximum number of iterations
-
-    Returns:
-        - optimized_args (list): Optimized parameters
-        - sigma_args (list): Uncertainties in the optimized parameters
-    """
-
-    #Make Arrays:
-    xdata = np.array(xdata)
-    ydata = np.array(ydata)
-    yunc = np.array(yunc)
-
-    # Number of data points and parameters
-    n = len(xdata)
-    p = len(param_guess)
-    
-    if n < 2:
-        print("Error: Need more data!")
-    
-    # Compute weights from uncertainties in y
-    weights = 1 / (yunc**2)
-    
-    # Initialize parameters
-    params = np.array(param_guess, dtype=float)
-    
-    # Gradient descent loop
-    for iteration in range(max_iter):
-        # Compute residuals and weighted sum of squared residuals
-        residuals = ydata - fitting_func(xdata, *params)
-        weighted_residuals = weights * residuals**2
-        chi_squared = np.sum(weighted_residuals)
-        
-        # Compute gradients (partial derivatives with respect to parameters)
-        gradients = np.zeros(p)
-        for i in range(p):
-            # Perturb parameter i slightly
-            delta = 1e-3
-            params_perturbed = params.copy()
-            params_perturbed[i] += delta
-            residuals_perturbed = ydata - fitting_func(xdata, *params_perturbed)
-            
-            # Numerical gradient
-            gradients[i] = -2 * np.sum(weights * residuals * (residuals_perturbed - residuals) / delta)
-        
-        # Update parameters using gradient descent
-        params -= learning_rate * gradients
-        
-        # Check for convergence
-        if np.linalg.norm(gradients) < tol:
-            break
-        else:
-            raise ValueError("Error: Maximum iterations reached without convergence.")
-    
-    # Estimate parameter uncertainties (approximation)
-    J = np.zeros((n, p))  # Jacobian matrix
-    for i in range(p):
-        delta = 1e-5
-        params_perturbed = params.copy()
-        params_perturbed[i] += delta
-        J[:, i] = (fitting_func(xdata, *params_perturbed) - fitting_func(xdata, *params)) / delta
-    
-    covariance_matrix = np.linalg.inv(J.T @ np.diag(weights) @ J)
-
-    sigma_args = np.sqrt(np.diag(covariance_matrix))
-    
-    return params, sigma_args
 
 def is_equidistant(data):
     """
@@ -201,9 +182,11 @@ def is_equidistant(data):
         bool: True if data points are equidistant, False otherwise.
     """
     diffs = np.diff(data)
-    return np.allclose(diffs, diffs[0])
+    if np.allclose(diffs, diffs[0]):
+        return 'Your data is equidistant!'
+    return 'Your data is not equidistant :('
 
-def forward_fft(data):
+def forward_fft(xdata, ydata):
     """
     Compute the Fast Fourier Transform (FFT) of the input data.
     
@@ -213,71 +196,61 @@ def forward_fft(data):
     Returns:
         array: The FFT of the input data.
     """
-    return np.fft.fft(data)
+    spectrum = np.fft.fft(ydata)
+    dx = xdata[1] - xdata[0]  # Sampling interval (check uniformity!)
+    frequencies = np.fft.fftfreq(len(xdata), d=dx)
+    scaled_frequencies = frequencies*100
 
-def inverse_fft(data):
+    magnitude = np.abs(spectrum)
+
+    return scaled_frequencies, magnitude, spectrum
+
+import numpy as np
+
+def inverse_fft(spectrum):
     """
-    Compute the Inverse Fast Fourier Transform (IFFT) of the input data.
-    
+    Compute the Inverse Fast Fourier Transform (IFFT) of the input spectrum.
+
     Parameters:
-        data (array-like): The input data for the IFFT.
+        frequencies (array-like): The frequency data (e.g., output from FFT).
+        spectrum (array-like): The FFT spectrum (e.g., output from FFT).
     
     Returns:
-        array: The IFFT of the input data.
+        tuple: Reconstructed x-axis data and reconstructed y-axis data.
     """
-    return np.fft.ifft(data)
+    #Compute inverse fast fourier transform
+    og_data = np.fft.ifft(spectrum)
 
-def fft_with_check(data, x_coords=None):
-    """
-    Compute the FFT, but first check if the data points are equidistant.
-    
-    Parameters:
-        data (array-like): The input data for the FFT.
-        x_coords (array-like, optional): The x-coordinates of the data points.
-                                        If None, equidistant spacing is assumed.
-    
-    Returns:
-        array: The FFT of the input data.
-    
-    Raises:
-        ValueError: If the data points are not equidistant.
-    """
-    if x_coords is not None and not is_equidistant(x_coords):
-        raise ValueError("FFT requires equidistant data points.")
-    return forward_fft(data)
-
-def ifft_with_check(data, x_coords=None):
-    """
-    Compute the IFFT, but first check if the data points are equidistant.
-    
-    Parameters:
-        data (array-like): The input data for the IFFT.
-        x_coords (array-like, optional): The x-coordinates of the data points.
-                                         If None, equidistant spacing is assumed.
-    
-    Returns:
-        array: The IFFT of the input data.
-    
-    Raises:
-        ValueError: If the data points are not equidistant.
-    """
-    if x_coords is not None and not is_equidistant(x_coords):
-        raise ValueError("IFFT requires equidistant data points.")
-    return inverse_fft(data)
+    return np.real(og_data)
 
 #TEMPORARY
-def curvefit_wrapper(fitting_func, xdata, ydata, p0=None, yunc=None, bounds=(-np.inf, np.inf), return_cov=False):
+def sine(x, a, b, c, d):
+    '''A sinusoidal function for the fitting of our data
+    Parameters:
+    -x: independent variable
+    -a: amplitude
+    -b: frequency
+    -c: phase
+    -d: vertical offset
+
+    retruns:
+    a*sin(bx+c)+d
+    '''
+    return a*np.sin(b*x+c) + d
+
+def sinefit_wrapper(xdata, ydata, p0=None, yunc=None, return_cov=False):
     """
     A wrapper for scipy.optimize.curve_fit that adds uncertainty handling.
 
     Parameters:
-    - fitting_func (callable): The model function, f(x, *params), to fit.
     - xdata (array-like): The independent variable data.
     - ydata (array-like): The dependent variable data.
     - p0 (array-like, optional): Initial guess for the parameters.
     - yunc (array-like, optional): Standard deviation of ydata (used as weights in the fit).
     - bounds (2-tuple of array-like, optional): Bounds on the parameters (default: no bounds).
-    - return_cov (bool, optional): If True, return the covariance matrix along with fit parameters (default: False).
+    - return_cov (bool, optional): If True, return 
+                                    the covariance matrix along with 
+                                    fit parameters (default: False).
 
     Returns:
     - popt (array): Optimized parameters.
@@ -292,7 +265,10 @@ def curvefit_wrapper(fitting_func, xdata, ydata, p0=None, yunc=None, bounds=(-np
 
     # Perform the curve fitting
     try:
-        popt, pcov = curve_fit(fitting_func, xdata, ydata, p0=p0, sigma=yunc, bounds=bounds, absolute_sigma=True)
+        popt, pcov = [scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
+                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[0],
+                                scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
+                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[1]]
     except RuntimeError as e:
         print(f"Error: Curve fitting did not converge. {e}")
         return None
@@ -300,3 +276,58 @@ def curvefit_wrapper(fitting_func, xdata, ydata, p0=None, yunc=None, bounds=(-np
     if return_cov:
         return popt, pcov
     return popt
+
+##THE FIXED PART IS A LIE
+def curve_fit_fixed(func, xdata, ydata, guess):
+    """
+    A functn doing optimized curve fitting that returns parameters with uncertainties 
+
+    Parameters:
+    -fun: Function to be fit to data
+    -xdata: independent variable data
+    -ydata: dependent variable data
+    -guess: best guess at parameters
+
+    Returns:
+    -params: optimized parameters
+    -pcov: cavariance matrix from which we can get uncertainties by taking the trace
+    """
+    #Set the change in parameters for fitting and max number of iterations and tolerance for success
+    param_change = 0.001
+    max_iter = 1000
+    tol = 1e-6
+
+    params = np.array(guess, dtype=float)
+    prev_loss = float('inf')
+    for _ in range(max_iter):
+        grad = np.zeros_like(params)
+        delta = 1e-8  # Small delta for finite difference gradient estimation
+        for i in range(len(params)):
+            params_up = params.copy()
+            params_down = params.copy()
+            params_up[i] += delta
+            params_down[i] -= delta
+
+            grad[i] = ((ydata-func(xdata, *params_up))**2 - (ydata-func(xdata, *params_down)**2)) / (2 * delta)
+
+        # Update parameters
+        params -= param_change * grad
+
+        # Check convergence
+        current_loss = np.sum((ydata - func(xdata, *params))**2)
+        if np.abs(prev_loss - current_loss) < tol:
+            break
+        if current_loss > prev_loss:  # Safeguard against divergence
+            param_change *= 0.5
+        prev_loss = current_loss
+
+    # Estimate covariance matrix (basic approximation)
+    residuals = (ydata - func(xdata, *params))
+    dof = len(ydata) - len(params)  # Degrees of freedom
+    if dof > 0:
+        residual_var = np.sum(residuals**2) / dof
+    else:
+        residual_var = 0
+    pcov = np.linalg.pinv(np.dot(grad[:, None], grad[None, :])) * residual_var
+
+    return params, pcov
