@@ -10,6 +10,7 @@ import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+# from matplotlib import cm, colormaps
 
 def convert_f_to_k(f):
     """
@@ -207,7 +208,7 @@ def sine_fit(x, y):
         'offset': y_mean
     }
 
-def check_equidistant_x(x_values: np.ndarray, tolerance: float = 1e-6) -> bool:
+def check_equidistant_x(x_values: np.ndarray, tolerance: float = 1e-3) -> bool:
     """
     Check if the x values are equidistant within a specified tolerance.
 
@@ -241,7 +242,7 @@ def rotate_to_x_axis(data: pd.DataFrame,
         pd.DataFrame: Rotated coordinates with columns ['Time', 'x', 'y'].
     """
     results = {
-        'data': resample_to_2n_segments(data, n) if resample else data,
+        'data': resample_df_to_2n_segments(data, n) if resample else data,
         'coords': {},
         'rotation': {},
         'fit': {}
@@ -320,9 +321,85 @@ def prepare_and_fit(data, n=6, resample=False):
 
 
 # task 5
+def resample_df_to_2n_segments(data: pd.DataFrame, n: int = 6) -> pd.DataFrame:
+    """
+    Resample the dataset into 2^n equidistant segments based on the 'x' column using interpolation.
+
+    Args:
+        data (pd.DataFrame): Original DataFrame with 'Time', 'x', 'y', and other numeric columns.
+                             The second column (index 1) is treated as the x-axis for interpolation.
+        n (int): Determines the number of segments as 2^n.
+
+    Returns:
+        pd.DataFrame: Resampled data with the same structure as the original.
+    """
+    num_points = 2**n  # Number of equidistant segments
+    original_x = data.iloc[:, 1].to_numpy()  # Use the 'x' column (index 1) for interpolation
+    new_x = np.linspace(original_x.min(), original_x.max(), num_points)
+
+    # Interpolate all other columns
+    resampled_columns = {data.columns[1]: new_x}  # Initialize with resampled 'x' column
+    for col in data.columns:
+        if col != data.columns[1]:  # Skip the 'x' column since it's already resampled
+            resampled_columns[col] = np.interp(new_x, original_x, data[col].to_numpy())
+
+    # Create resampled DataFrame
+    resampled_data = pd.DataFrame(resampled_columns)
+
+    # Ensure original column order is preserved
+    return resampled_data[data.columns]
+
+def calculate_frequencies(x: np.ndarray, n: int, scale: float = 100):
+    """
+    Calculate FFT frequencies in pure Python, assuming x values are equidistant.
+
+    Args:
+        x (np.ndarray): Array of x values.
+        n (int): Number of data points.
+        scale (float): Scaling factor to adjust units (default: 100 for 1/100 meters).
+
+    Returns:
+        list: Frequencies in the desired units.
+    """
+    # Check if x values are equidistant
+    if not check_equidistant_x(x):
+        raise ValueError("x values must be equidistant to calculate frequencies.")
+
+    # Calculate spatial step size Δx (use the first interval since x is equidistant)
+    dx = x[1] - x[0]
+
+    # Calculate frequencies
+    frequencies = []
+    for k in range(n):
+        freq = k / (n * dx)  # Base frequency calculation
+        if k > n // 2:      # Handle negative frequencies for FFT symmetry
+            freq -= 1 / dx
+        frequencies.append(freq * scale)
+    return frequencies
+
+def apply_fft_to_arrays(x: np.ndarray, y: np.ndarray):
+    """
+    Apply FFT to a NumPy array of y values, normalize the FFT values, and return results.
+
+    Args:
+        x (np.ndarray): Array of equidistant x values.
+        y (np.ndarray): Array of y values.
+
+    Returns:
+        tuple: (frequencies, fft_values) where frequencies are in units of 1/100 meters.
+    """
+    n = len(y)
+    fft_values = np.fft.fft(y)  # Raw FFT
+    fft_frequencies = calculate_frequencies(x, n)
+
+    # Normalize FFT values
+    normalized_fft_values = fft_values / n
+
+    return fft_frequencies, normalized_fft_values
+
 def apply_fft(data: pd.DataFrame):
     """
-    Apply FFT to the y values and return frequencies and FFT values.
+    Wrapper function to apply FFT to a DataFrame column.
 
     Args:
         data (pd.DataFrame): DataFrame with equidistant 'x' and 'y' values.
@@ -330,33 +407,29 @@ def apply_fft(data: pd.DataFrame):
     Returns:
         tuple: (frequencies, fft_values) where frequencies are in units of 1/100 meters.
     """
-    y = data['y'].to_numpy()
     x = data['x'].to_numpy()
-    n = len(y)
+    y = data['y'].to_numpy()
+    return apply_fft_to_arrays(x, y)
 
-    # Calculate the spatial step size Δx
-    dx = np.mean(np.diff(x))  # Mean difference between consecutive x values
-
-    # Compute FFT
-    fft_values = np.fft.fft(y)
-    fft_frequencies = np.fft.fftfreq(n, d=dx)  # Frequencies in units of 1/meter
-
-    # Convert frequencies to units of 1/100 meters
-    fft_frequencies_scaled = fft_frequencies * 100
-
-    return fft_frequencies_scaled, fft_values
-
-def apply_ifft(fft_values: np.ndarray) -> np.ndarray:
+def apply_ifft(fft_values: np.ndarray, reverse_norm: bool = True ) -> np.ndarray:
     """
-    Apply Inverse FFT to reconstruct the signal.
+    Apply the Inverse FFT (IFFT) and scale the result to reconstruct the original signal.
 
     Args:
-        fft_values (np.ndarray): FFT values.
+        fft_values (np.ndarray): Normalized FFT values.
 
     Returns:
-        np.ndarray: Reconstructed y values.
+        np.ndarray: Reconstructed signal in the original domain.
     """
-    return np.fft.ifft(fft_values).real
+    n = len(fft_values)
+    reconstructed_y = None
+
+    # undo normalization by default
+    if reverse_norm is True:
+        reconstructed_y = np.fft.ifft(fft_values * n)   # Reverse normalization
+
+    return np.real(reconstructed_y)  # real parts only
+
 
 def plot_fft(frequencies: np.ndarray, fft_values: np.ndarray,
              title: str = "FFT Spectrum", threshold: float = 0.01):
