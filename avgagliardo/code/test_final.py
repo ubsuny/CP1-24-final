@@ -25,7 +25,6 @@ from final import rotate_to_x_axis, prepare_and_fit
 # Task 4 imports
 from final import apply_fft, apply_ifft, apply_fft_to_arrays
 
-
 # Task 1  tests
 def test_convert_f_to_k():
     """

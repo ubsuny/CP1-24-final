@@ -222,7 +222,6 @@ def check_equidistant_x(x_values: np.ndarray, tolerance: float = 1e-3) -> bool:
     diffs = np.diff(x_values)  # Compute differences between consecutive x values
     return np.all(np.abs(diffs - diffs[0]) <= tolerance)
 
-
 def rotate_to_x_axis(data: pd.DataFrame,
         resample: bool = False,
         n: int = 6,
@@ -318,7 +317,6 @@ def prepare_and_fit(data, n=6, resample=False):
         print("x values are equidistant.")
 
     return refit_data
-
 
 # task 5
 def resample_df_to_2n_segments(data: pd.DataFrame, n: int = 6) -> pd.DataFrame:
@@ -429,7 +427,6 @@ def apply_ifft(fft_values: np.ndarray, reverse_norm: bool = True ) -> np.ndarray
         reconstructed_y = np.fft.ifft(fft_values * n)   # Reverse normalization
 
     return np.real(reconstructed_y)  # real parts only
-
 
 def plot_fft(frequencies: np.ndarray, fft_values: np.ndarray,
              title: str = "FFT Spectrum", threshold: float = 0.01):
