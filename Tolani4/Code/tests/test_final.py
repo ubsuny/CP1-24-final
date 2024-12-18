@@ -19,6 +19,7 @@ def test_fahrenheit_to_kelvin():
 # Test parse_temperature function with a mock markdown file
 @pytest.fixture
 def mock_md_file():
+    "creates a mock markdown file to test"
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file.write(b"Temperature = 70 F\n")
         temp_file.close()
@@ -26,7 +27,7 @@ def mock_md_file():
         os.remove(temp_file.name)
 
 
-
+# Tests parse temperature function to make sure temperature value is correctly being extracted from markdown files for each walk
 def test_parse_temperature(mock_md_file):
     temperature = parse_temperature(mock_md_file)
     assert np.isclose(temperature, 294.26, atol=1e-2)  # Adjust tolerance to account for precision
