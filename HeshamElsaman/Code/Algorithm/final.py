@@ -56,7 +56,9 @@ def list_files(directory, extension, fltr):
         # List all files in the directory
         files = [
             file for file in os.listdir(directory)
-            if os.path.isfile(os.path.join(directory, file)) and file.endswith(extension) and fltr in file
+            if (os.path.isfile(os.path.join(directory, file))
+                and file.endswith(extension)
+                and fltr in file)
         ]
         return files
     except FileNotFoundError as e:
@@ -117,7 +119,7 @@ def fit_sinusoidal(x_data, y_data, steps, initial_guess):
     for _ in range(steps):  # Iterate for convergence
         res = residuals(x_data, y_data, (a, b, c))
         grad_a = -2 * sum(r * math.sin(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
-        grad_b = -2 * sum(r * a * x * math.cos(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
+        grad_b = -2 * sum(r * a * x * math.cos(b * x + c) for r, x in zip(res, x_data))/ len(x_data)
         grad_c = -2 * sum(r * a * math.cos(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
         # Update parameters using gradient descent
         a -= step_size * grad_a
@@ -142,7 +144,7 @@ def check_equidistant(data, x_col):
     """
     x = data[x_col]
     differences = np.diff(x.values)
-    return np.allclose(differences, differences[0])
+    return np.allclose(differences, differences[0], atol=0.1)
 
 def fft(data, x_col, y_col):
     """
@@ -208,7 +210,7 @@ def xy_coord(path):
         Outputs:
             a tuble of two lists of x and y positions respectively
     """
-    with open(path, 'r') as file:
+    with open(path, 'r', encoding="utf-8") as file:
         content = file.readlines()
         latitudes = list([float(i.split(',')[1]) for i in content[1:]])
         longitudes = list([float(i.split(',')[2]) for i in content[1:]])
@@ -261,9 +263,11 @@ def mult_plot(horizontal_list, vertical_list, title, horizontal_label, vertical_
     # sizes = [len(i) for i in horizontal_list]
     for i in range(lists_number):
         if line_plot:
-            plt.plot(horizontal_list[i], vertical_list[i], marker = 'o', label = legends[i] if legends else f"Dataset {i+1}")
+            plt.plot(horizontal_list[i], vertical_list[i], marker = 'o',
+                     label = legends[i] if legends else f"Dataset {i+1}")
         else:
-            plt.scatter(horizontal_list[i], vertical_list[i], label = legends[i] if legends else f"Dataset {i+1}")
+            plt.scatter(horizontal_list[i], vertical_list[i], label = legends[i]
+                        if legends else f"Dataset {i+1}")
     plt.title(title)
     plt.xlabel(horizontal_label)
     plt.ylabel(vertical_label)
