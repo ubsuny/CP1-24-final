@@ -241,7 +241,7 @@ def xy_plot(horizontal, vertical, title, horizontal_label, vertical_label,
     plt.show()
 
 # Functuion to show multiple plots
-def mult_plot(horizontal_list, vertical_list, title, horizontal_label, vertical_label, filename, legends,
+def mult_plot(horizontal_list, vertical_list, title, horizontal_label, vertical_label, legends,
                line_plot=True):
     """
     Plots multiple datasets on the same grid using Matplotlib.
