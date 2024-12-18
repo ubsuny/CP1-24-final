@@ -1,5 +1,5 @@
+"""Kylemasc917 final project to process GPS sinewalk data"""
 import os
-import math
 import csv
 import numpy as np
 from scipy.optimize import curve_fit
@@ -62,15 +62,17 @@ def is_non_equidistant(x_data):
     diffs = np.diff(x_data)
     return not np.allclose(diffs, diffs[0])
 
-def fft(data, step_number=10):
+def fft(data):
     """Wrapper for FFT, returns the frequency components."""
-    if is_non_equidistant(data[0]):
+    x_data, y_data = data  # Unpack the tuple
+    if is_non_equidistant(x_data):
         raise ValueError("Input data is non-equidistant. Please resample first.")
 
-    num_samples = len(data)
-    total_time = 2**step_number
-    sampling_interval = total_time / num_samples
-    fft_result = np.fft.fft(data)
+    num_samples = len(x_data)  # Number of data points
+    total_time = x_data[-1] - x_data[0]  # Total duration from start to end
+    sampling_interval = total_time / (num_samples - 1)  # Compute sampling interval
+
+    fft_result = np.fft.fft(y_data)
     freqs = np.fft.fftfreq(num_samples, sampling_interval)
 
     return fft_result, freqs
@@ -84,13 +86,12 @@ def calculate_frequency_axis(x_data, total_time, f_unit='1/m'):
     num_samples = len(x_data)
     fs = num_samples / total_time  # Spatial sampling frequency (number of samples per meter)
     freq_axis = [i * fs / num_samples for i in range(num_samples // 2)]
-    
+
     if f_unit == '1/m':
         return freq_axis
-    elif f_unit == 'k1/m':
+    if f_unit == 'k1/m':
         return [f / 1000 for f in freq_axis]
-    else:
-        raise ValueError(f"Unsupported frequency unit {f_unit}")
+    raise ValueError(f"Unsupported frequency unit {f_unit}")
 
 def load_csv_data(files):
     """Load data from multiple CSV files using DictReader to access by header."""
@@ -111,131 +112,119 @@ def load_csv_data(files):
         data.append((x_values, y_values))
     return data
 
-def plot_fft_and_filtered_ifft(data, output_image_prefix):
-    """Plot FFT, Inverse FFT, and Inverse FFT of the filtered frequency components."""
-    
-    # Plot FFTs
+def shift_and_fft(x_data, y_data):
+    """Shift data to start at the origin and perform FFT."""
+    x_data_shifted = np.array(x_data) - x_data[0]
+    y_data_shifted = np.array(y_data) - y_data[0]
+    y_fft = np.fft.fft(y_data_shifted)
+    freqs = np.fft.fftfreq(len(y_data_shifted), d=x_data_shifted[1] - x_data_shifted[0])
+    return x_data_shifted, y_fft, freqs
+
+def plot_fft(data, output_image):
+    """Plot FFT for all datasets."""
     plt.figure(figsize=(10, 6))
     for i, (x_data, y_data) in enumerate(data):
-        # Shift the data to make sure the first point is the origin (0, 0)
-        x_data_shifted = np.array(x_data) - x_data[0]
-        y_data_shifted = np.array(y_data) - y_data[0]
-        
-        # Perform FFT
-        y_fft = np.fft.fft(y_data_shifted)
-        
-        # Calculate frequency axis
-        freqs = np.fft.fftfreq(len(y_data_shifted), d=(x_data_shifted[1] - x_data_shifted[0]))
-        
-        # Plot the FFT
+        _, y_fft, freqs = shift_and_fft(x_data, y_data)
         plt.plot(freqs, np.abs(y_fft), label=f"FFT of Data {i+1}")
-    
+
     plt.title("FFT of All Data Files")
     plt.xlabel("Frequency (1/100m)")
     plt.ylabel("Amplitude")
     plt.legend()
-    fft_image = f"{output_image_prefix}_fft.png"
     plt.tight_layout()
-    plt.savefig(fft_image)
-    print(f"FFT plot saved to {fft_image}")
+    plt.savefig(output_image)
+    print(f"FFT plot saved to {output_image}")
     plt.close()
 
-    # Plot Inverse FFTs
+def plot_ifft(data, output_image):
+    """Plot Inverse FFT for all datasets."""
     plt.figure(figsize=(10, 6))
     for i, (x_data, y_data) in enumerate(data):
-        # Shift the data to make sure the first point is the origin (0, 0)
-        x_data_shifted = np.array(x_data) - x_data[0]
-        y_data_shifted = np.array(y_data) - y_data[0]
-        
-        # Perform FFT
-        y_fft = np.fft.fft(y_data_shifted)
-        
-        # Perform Inverse FFT
+        x_data_shifted, y_fft, _ = shift_and_fft(x_data, y_data)  # Ignore `freqs`
         y_ifft = np.fft.ifft(y_fft)
-        
-        # Plot the inverse FFT
         plt.plot(x_data_shifted, np.real(y_ifft), label=f"Inverse FFT of Data {i+1}")
-    
+
     plt.title("Inverse FFT of All Data Files")
     plt.xlabel("X (Shifted to start at 0)")
     plt.ylabel("Y (Recovered from Inverse FFT)")
     plt.legend()
-    ifft_image = f"{output_image_prefix}_ifft.png"
     plt.tight_layout()
-    plt.savefig(ifft_image)
-    print(f"Inverse FFT plot saved to {ifft_image}")
+    plt.savefig(output_image)
+    print(f"Inverse FFT plot saved to {output_image}")
     plt.close()
 
-    # Now plot the filtered Inverse FFT
+
+def plot_filtered_ifft(data, output_image, threshold=0.1):
+    """Plot filtered Inverse FFT for all datasets."""
     plt.figure(figsize=(10, 6))
     for i, (x_data, y_data) in enumerate(data):
-        # Shift the data to make sure the first point is the origin (0, 0)
-        x_data_shifted = np.array(x_data) - x_data[0]
-        y_data_shifted = np.array(y_data) - y_data[0]
-
-        # Perform FFT
-        y_fft = np.fft.fft(y_data_shifted)
-
-        # Calculate the frequency axis
-        freqs = np.fft.fftfreq(len(y_data_shifted), d=(x_data_shifted[1] - x_data_shifted[0]))
-
-        # Filter the FFT components to retain the mean value of the frequency components
+        x_data_shifted, y_fft, _ = shift_and_fft(x_data, y_data)  # Ignore `freqs`
         mean_freq = np.mean(np.abs(y_fft))
-        threshold = 0.1  # Adjust this threshold based on how strict you want the filter to be
         filtered_fft = y_fft * (np.abs(y_fft) > threshold * mean_freq)
-
-        # Perform Inverse FFT on the filtered data
         y_ifft_filtered = np.fft.ifft(filtered_fft)
-
-        # Plot the result
-        plt.plot(x_data_shifted, np.real(y_ifft_filtered), label=f"Filtered Inverse FFT of Data {i+1}")
+        plt.plot(x_data_shifted, np.real(y_ifft_filtered), label=f"Filtered IFFT of Data {i+1}")
 
     plt.title("Inverse FFT of Filtered Frequency Components")
     plt.xlabel("X (Shifted to start at 0)")
     plt.ylabel("Y (Recovered from Filtered Inverse FFT)")
     plt.legend()
-    filtered_ifft_image = f"{output_image_prefix}_filtered_ifft.png"
     plt.tight_layout()
-    plt.savefig(filtered_ifft_image)
-    print(f"Filtered Inverse FFT plot saved to {filtered_ifft_image}")
+    plt.savefig(output_image)
+    print(f"Filtered Inverse FFT plot saved to {output_image}")
     plt.close()
 
-def process_files(files=None, initial_guess=[1, 1, 0, 0], output_image='fit_plot.png'):
+
+def plot_fft_and_filtered_ifft(data, output_image_prefix):
+    """Plot FFT, Inverse FFT, and Filtered Inverse FFT."""
+    plot_fft(data, f"{output_image_prefix}_fft.png")
+    plot_ifft(data, f"{output_image_prefix}_ifft.png")
+    plot_filtered_ifft(data, f"{output_image_prefix}_filtered_ifft.png")
+
+def process_files(files=None, initial_guess=None, output_image='fit_plot.png'):
     """Process CSV files, perform fitting, and plot fits onto a single PNG file."""
     if files is None:
         files = []
+    if initial_guess is None:
+        initial_guess = [1, 1, 0, 0]
 
     data = load_csv_data(files)
-    
+
     # Create a plot for the sine wave fitting
     plt.figure(figsize=(10, 6))
-    
-    # Loop through each file, fit the sine wave, and plot the result
+
     for i, (x_data, y_data) in enumerate(data):
-        # Shift the data so the first point is the origin (0, 0)
+        # Shift data so the first point is the origin (0, 0)
         x_data_shifted = np.array(x_data) - x_data[0]
         y_data_shifted = np.array(y_data) - y_data[0]
-        
+
         # Non-linear fitting
-        amplitude, frequency, phase, offset = nonlinear_fit(x_data_shifted, y_data_shifted, initial_guess)
-        print(f"Fitting parameters for file {files[i]}: amplitude={amplitude}, frequency={frequency}, phase={phase}, offset={offset}")
-        
+        amplitude, frequency, phase, offset = nonlinear_fit(
+            x_data_shifted, y_data_shifted, initial_guess
+        )
+        print(
+            f"File {files[i]} parameters:"
+            f" amplitude={amplitude}, frequency={frequency},"
+            f" phase={phase}, offset={offset}"
+        )
+
         # Generate the fitted data
         y_fit = sine_wave(x_data_shifted, amplitude, frequency, phase, offset)
-        
+
         # Plot the shifted data and the fit
-        plt.plot(x_data_shifted, y_data_shifted, label=f'Original Data {i+1}')
-        plt.plot(x_data_shifted, y_fit, label=f'Fit {i+1}')
-    
+        plt.plot(
+            x_data_shifted, y_data_shifted, label=f'Original Data {i + 1}'
+        )
+        plt.plot(x_data_shifted, y_fit, label=f'Fit {i + 1}')
+
     plt.title("Sine Wave Fit for Each CSV File")
     plt.xlabel("X (Shifted to start at 0)")
     plt.ylabel("Y (Shifted to start at 0)")
     plt.legend()
-    
+
     plt.tight_layout()
     plt.savefig(output_image)
     print(f"Plot saved to {output_image}")
     plt.close()
 
-    # Now plot the FFT, IFFT, and filtered IFFT
+    # Plot FFT, IFFT, and filtered IFFT
     plot_fft_and_filtered_ifft(data, output_image_prefix="fft_and_ifft")
