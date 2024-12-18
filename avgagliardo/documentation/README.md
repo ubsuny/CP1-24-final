@@ -1,14 +1,14 @@
-# README
+# README.md
+
+## Files
+- /avgagliardo/code/final.py
+- /avgagliardo/code/test_final.py
+- /avgagliardo/docs/final_docs/final.ipynb  
+- /avgagliardo/data/AVG002_gps_sine_walk/experimental_data/AVG002_gps_sine_walk_{trial_number}.csv
 
 ## Data & Preprocessing
 Data was recorded with phyphox, shipped as a csv, and the preprocessed to conform to naming conventions.
 Metadata also prepared in a similar manner. Metadata lives in a markdown file named after its experiment.
-
-## Files
-- /code/final.py
-- /code/test_final.py
-- /docs/final.ipynb
-- /data/AVG002_gps_sine_walk/experimental_data/AVG002_gps_sine_walk_{trial_number}.csv
 
 ### Trial Data
 Experimental data lives in the /data/AVG002_gps_sine_walk/experimental_data/ directory.
@@ -18,7 +18,6 @@ Experimental data lives in the /data/AVG002_gps_sine_walk/experimental_data/ dir
 The final.py module implements the algorithm tasks. It can be found in the /code/ directory.
 ### Module: test_final.py
 The test_final.py module implements the unit tests for the final.py module's functionality. It can also be found in the /code/ directory and can be run with `pytest test_final.py`.
-
 
 ## Project Tasks
 ### Merging Task
@@ -45,6 +44,9 @@ Implemented in final.py by the apply_fft() and apply_ifft() methods, assisted by
 - resample_df_to_2n_segments()
 - calculate_frequencies()
 - apply_fft_to_arrays()
+
+### Documentation Task
+All of the documentation tasks can be found in the final.ipynb notebook in the /docs/final_docs/ directory.
 
 ## Additional Notes
 - I had to start using type hints at a certain point to keep the data types straight while passing between functions, but I may have missed a few since I started using them about halfway through. It doesn't seem like the most pythonic practice at first, but I learned to appreciate the hints as the routine grew more complex.
