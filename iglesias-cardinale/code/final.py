@@ -100,8 +100,11 @@ def get_temp(path):
     
     Returns:
         -temp: temperature from metadata file'''
-    data = np.loadtxt(path, unpack=True)
-    temp = data[0]
+    data = np.loadtxt(path,
+        skiprows=5,
+        delimiter = ',',
+        unpack=True)
+    temp = data
 
     return temp
 
@@ -205,8 +208,6 @@ def forward_fft(xdata, ydata):
 
     return scaled_frequencies, magnitude, spectrum
 
-import numpy as np
-
 def inverse_fft(spectrum):
     """
     Compute the Inverse Fast Fourier Transform (IFFT) of the input spectrum.
@@ -278,7 +279,7 @@ def sinefit_wrapper(xdata, ydata, p0=None, yunc=None, return_cov=False):
     return popt
 
 ##THE FIXED PART IS A LIE
-def curve_fit_fixed(func, xdata, ydata, guess):
+def curve_fit_fixed(func, xdata, ydata, params):
     """
     A functn doing optimized curve fitting that returns parameters with uncertainties 
 
@@ -297,18 +298,17 @@ def curve_fit_fixed(func, xdata, ydata, guess):
     max_iter = 1000
     tol = 1e-6
 
-    params = np.array(guess, dtype=float)
     prev_loss = float('inf')
     for _ in range(max_iter):
         grad = np.zeros_like(params)
-        delta = 1e-8  # Small delta for finite difference gradient estimation
         for i in range(len(params)):
             params_up = params.copy()
             params_down = params.copy()
-            params_up[i] += delta
-            params_down[i] -= delta
+            params_up[i] += 1e-8
+            params_down[i] -= 1e-8
 
-            grad[i] = ((ydata-func(xdata, *params_up))**2 - (ydata-func(xdata, *params_down)**2)) / (2 * delta)
+            grad[i] = ((ydata-func(xdata, *params_up))**2
+                       - (ydata-func(xdata, *params_down)**2)) / (2 * 1e-8)
 
         # Update parameters
         params -= param_change * grad
@@ -322,10 +322,8 @@ def curve_fit_fixed(func, xdata, ydata, guess):
         prev_loss = current_loss
 
     # Estimate covariance matrix (basic approximation)
-    residuals = (ydata - func(xdata, *params))
-    dof = len(ydata) - len(params)  # Degrees of freedom
-    if dof > 0:
-        residual_var = np.sum(residuals**2) / dof
+    if len(ydata) - len(params) > 0:
+        residual_var = np.sum((ydata - func(xdata, *params))**2) / (len(ydata) - len(params))
     else:
         residual_var = 0
     pcov = np.linalg.pinv(np.dot(grad[:, None], grad[None, :])) * residual_var
