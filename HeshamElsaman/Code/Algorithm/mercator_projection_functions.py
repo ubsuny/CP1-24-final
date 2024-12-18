@@ -37,9 +37,9 @@ def xy_on_earth(latitudes, longitudes):
 
     Parameters:
     Inputs:
-    latitudes (number), longitudes (number): angular positions on the Earth's surface
+    latitudes (list or array), longitudes (list or array): angular positions on the Earth's surface
     Outputs:
-    x (array): X coordinates in the 2D plane.
-    y (array): Y coordinates in the 2D plane.
+    x (list): X coordinates in the 2D plane.
+    y (list): Y coordinates in the 2D plane.
     """
     return latlon_to_xy_mercator(latitudes, longitudes, EARTH_RADIUS)

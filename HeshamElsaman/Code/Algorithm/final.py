@@ -7,6 +7,7 @@ import math
 import numpy as np
 import pandas as pd
 import unit_converter_module as ucm
+from mercator_projection_functions import xy_on_earth
 
 # Temperature Conversion
 def fahrenheit_to_kelvin(fahrenheit):
@@ -195,19 +196,20 @@ def calculate_frequency_axis(sample_rate, num_samples):
     return pd.Series(frequencies)
 
 # Reading out the latitudes and longitudes from a .csv file
-def lat_long(path):
+def xy_coord(path):
     """
     Extracts the latitudes and longitudes data out of a .csv file
+    and returns the data converted to xy coordinates
 
     Parameters:
         Inputs:
             path (str): the absolute path of the .csv file
         
         Outputs:
-            a tuble of two lists of latitudes and longitudes respectively
+            a tuble of two lists of x and y positions respectively
     """
     with open(path, 'r') as file:
         content = file.readlines()
-        latitudes = list(ucm.deg_to_rad([float(i.split(',')[1]) for i in content[1:]]))
-        longitudes = list(ucm.deg_to_rad([float(i.split(',')[2]) for i in content[1:]]))
-    return latitudes, longitudes
+        latitudes = list([float(i.split(',')[1]) for i in content[1:]])
+        longitudes = list([float(i.split(',')[2]) for i in content[1:]])
+    return xy_on_earth(latitudes, longitudes)
