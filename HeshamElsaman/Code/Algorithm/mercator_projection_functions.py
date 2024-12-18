@@ -20,8 +20,8 @@ def latlon_to_xy_mercator(latitudes, longitudes, radius):
     x (array): X coordinates in the 2D plane.
     y (array): Y coordinates in the 2D plane.
     """
-    latitudes_rad = np.radians(np.array(latitudes))
-    longitudes_rad = np.radians(np.array(longitudes))
+    latitudes_rad = list(np.radians(np.array(latitudes)))
+    longitudes_rad = list(np.radians(np.array(longitudes)))
 
     x = [radius * i for i in longitudes_rad]
     y = [radius * np.log(np.tan(np.pi / 4 + i / 2)) for i in latitudes_rad]

@@ -114,11 +114,11 @@ def fit_sinusoidal(x_data, y_data, steps, initial_guess):
     # Parameters and step size
     a, b, c = initial_guess
     step_size = 1 / (2 ** steps)
-    for _ in range(100):  # Iterate for convergence
+    for _ in range(steps):  # Iterate for convergence
         res = residuals(x_data, y_data, (a, b, c))
-        grad_a = -2 * sum(r * math.sin(b * x + c) for r, x in zip(res, x_data))
-        grad_b = -2 * sum(r * a * x * math.cos(b * x + c) for r, x in zip(res, x_data))
-        grad_c = -2 * sum(r * a * math.cos(b * x + c) for r, x in zip(res, x_data))
+        grad_a = -2 * sum(r * math.sin(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
+        grad_b = -2 * sum(r * a * x * math.cos(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
+        grad_c = -2 * sum(r * a * math.cos(b * x + c) for r, x in zip(res, x_data)) / len(x_data)
         # Update parameters using gradient descent
         a -= step_size * grad_a
         b -= step_size * grad_b
@@ -239,6 +239,39 @@ def xy_plot(horizontal, vertical, title, horizontal_label, vertical_label,
     plt.ylabel(vertical_label)
     plt.grid(True)
     plt.show()
+
+# Functuion to show multiple plots
+def mult_plot(horizontal_list, vertical_list, title, horizontal_label, vertical_label, filename, legends,
+               line_plot=True):
+    """
+    Plots multiple datasets on the same grid using Matplotlib.
+
+    Parameters:
+        Inputs:
+            horizontal_list: A list of lists for the x-axis data for each plot.
+            vertical_list: A list of lists for the y-axis data for each plot.
+            title (str): Title of the plot.
+            horizontal_label (str): Label for the X-axis.
+            vertical_label (str): Label for the Y-axis.
+            legends (list of str): List of legend labels for each dataset in data lists.
+            line_plot (bool): If True, creates line plots; otherwise, scatter plots.
+    """
+    plt.figure(figsize=(10, 6))
+    lists_number = len(horizontal_list)
+    # sizes = [len(i) for i in horizontal_list]
+    for i in range(lists_number):
+        if line_plot:
+            plt.plot(horizontal_list[i], vertical_list[i], marker = 'o', label = legends[i] if legends else f"Dataset {i+1}")
+        else:
+            plt.scatter(horizontal_list[i], vertical_list[i], label = legends[i] if legends else f"Dataset {i+1}")
+    plt.title(title)
+    plt.xlabel(horizontal_label)
+    plt.ylabel(vertical_label)
+    plt.grid(True)
+    if legends:
+        plt.legend()
+    plt.show()
+
 
 # Trimming the data
 def data_trim(data, start_index=0):
