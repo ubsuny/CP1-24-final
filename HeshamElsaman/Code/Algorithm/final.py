@@ -6,8 +6,8 @@ import os
 import math
 import numpy as np
 import pandas as pd
-import unit_converter_module as ucm
-from mercator_projection_functions import xy_on_earth
+import matplotlib as plt
+import mercator_projection_functions as mpf
 
 # Temperature Conversion
 def fahrenheit_to_kelvin(fahrenheit):
@@ -212,4 +212,30 @@ def xy_coord(path):
         content = file.readlines()
         latitudes = list([float(i.split(',')[1]) for i in content[1:]])
         longitudes = list([float(i.split(',')[2]) for i in content[1:]])
-    return xy_on_earth(latitudes, longitudes)
+    return mpf.xy_on_earth(latitudes, longitudes)
+
+# Function to plot two dimensional data
+def xy_plot(horizontal, vertical, title, horizontal_label, vertical_label,
+               line_plot = True):
+    """
+    Plots two-dimensional data using Matplotlib.
+
+    Parameters:
+        Inputs:
+            horizontal (list or array): Data for the X-axis.
+            vertical (list or array): Data for the Y-axis.
+            title (str): Title of the plot.
+            horizontal_label (str): Label for the X-axis.
+            vertical_label (str): Label for the Y-axis.
+            line_plot (bool): If True, creates a line plot; otherwise, a scatter plot.
+    """
+    plt.figure(figsize=(10, 6))
+    if line_plot:
+        plt.plot(horizontal, vertical, marker='o')
+    else:
+        plt.scatter(horizontal, vertical)
+    plt.title(title)
+    plt.xlabel(horizontal_label)
+    plt.ylabel(vertical_label)
+    plt.grid(True)
+    plt.show()
