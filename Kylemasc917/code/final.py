@@ -125,7 +125,7 @@ def plot_fft(data, output_image):
     plt.figure(figsize=(10, 6))
     for i, (x_data, y_data) in enumerate(data):
         _, y_fft, freqs = shift_and_fft(x_data, y_data)
-        plt.plot(freqs, np.abs(y_fft), label=f"FFT of Data {i+1}")
+        plt.plot(freqs, np.abs(y_fft), label=f"FFT of Data {i+1} - Temp: 50F")
 
     plt.title("FFT of All Data Files")
     plt.xlabel("Frequency (1/100m)")
@@ -142,11 +142,11 @@ def plot_ifft(data, output_image):
     for i, (x_data, y_data) in enumerate(data):
         x_data_shifted, y_fft, _ = shift_and_fft(x_data, y_data)  # Ignore `freqs`
         y_ifft = np.fft.ifft(y_fft)
-        plt.plot(x_data_shifted, np.real(y_ifft), label=f"Inverse FFT of Data {i+1}")
+        plt.plot(x_data_shifted, np.real(y_ifft), label=f"IFFT of Data {i+1} - Temp: 50F")
 
     plt.title("Inverse FFT of All Data Files")
-    plt.xlabel("X (Shifted to start at 0)")
-    plt.ylabel("Y (Recovered from Inverse FFT)")
+    plt.xlabel("X (Degree Radians)")
+    plt.ylabel("Y (Degree Radians)")
     plt.legend()
     plt.tight_layout()
     plt.savefig(output_image)
@@ -162,11 +162,11 @@ def plot_filtered_ifft(data, output_image, threshold=0.1):
         mean_freq = np.mean(np.abs(y_fft))
         filtered_fft = y_fft * (np.abs(y_fft) > threshold * mean_freq)
         y_ifft_filtered = np.fft.ifft(filtered_fft)
-        plt.plot(x_data_shifted, np.real(y_ifft_filtered), label=f"Filtered IFFT of Data {i+1}")
+        plt.plot(x_data_shifted, np.real(y_ifft_filtered), label=f"FilterIFFTData {i+1} - Temp:50F")
 
     plt.title("Inverse FFT of Filtered Frequency Components")
-    plt.xlabel("X (Shifted to start at 0)")
-    plt.ylabel("Y (Recovered from Filtered Inverse FFT)")
+    plt.xlabel("X (Degree radians)")
+    plt.ylabel("Y (Degree Radians)")
     plt.legend()
     plt.tight_layout()
     plt.savefig(output_image)
@@ -212,13 +212,13 @@ def process_files(files=None, initial_guess=None, output_image='fit_plot.png'):
 
         # Plot the shifted data and the fit
         plt.plot(
-            x_data_shifted, y_data_shifted, label=f'Original Data {i + 1}'
+            x_data_shifted, y_data_shifted, label=f'Original Data {i + 1} - Temp: 50F'
         )
         plt.plot(x_data_shifted, y_fit, label=f'Fit {i + 1}')
 
     plt.title("Sine Wave Fit for Each CSV File")
-    plt.xlabel("X (Shifted to start at 0)")
-    plt.ylabel("Y (Shifted to start at 0)")
+    plt.xlabel("X (degree radians)")
+    plt.ylabel("Y (degree radians)")
     plt.legend()
 
     plt.tight_layout()
