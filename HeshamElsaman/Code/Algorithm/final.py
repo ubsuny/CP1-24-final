@@ -6,6 +6,7 @@ import os
 import math
 import numpy as np
 import pandas as pd
+import unit_converter_module as ucm
 
 # Temperature Conversion
 def fahrenheit_to_kelvin(fahrenheit):
@@ -192,3 +193,21 @@ def calculate_frequency_axis(sample_rate, num_samples):
         freq = k * sample_rate / num_samples
         frequencies.append(freq)
     return pd.Series(frequencies)
+
+# Reading out the latitudes and longitudes from a .csv file
+def lat_long(path):
+    """
+    Extracts the latitudes and longitudes data out of a .csv file
+
+    Parameters:
+        Inputs:
+            path (str): the absolute path of the .csv file
+        
+        Outputs:
+            a tuble of two lists of latitudes and longitudes respectively
+    """
+    with open(path, 'r') as file:
+        content = file.readlines()
+        latitudes = list(ucm.deg_to_rad([float(i.split(',')[1]) for i in content[1:]]))
+        longitudes = list(ucm.deg_to_rad([float(i.split(',')[2]) for i in content[1:]]))
+    return latitudes, longitudes
