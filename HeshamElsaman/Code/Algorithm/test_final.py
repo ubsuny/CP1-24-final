@@ -53,10 +53,10 @@ def test_read_temp():
     expected = 28
     assert temp == expected, f"Test failed: Expected {expected}, but got {temp}."
 
-#Testing Listing The Files
-def test_list_markdown_files(tmp_path):
+# Testing Listing The Files
+def test_list_files(tmp_path):
     """
-    Test the list_markdown_files function with a temporary directory.
+    Test the list_files function with a temporary directory.
     """
     # Set up a temporary directory with test files
     markdown_files = ["experiment1.md", "experiment2.md", "notes.md"]
@@ -64,25 +64,67 @@ def test_list_markdown_files(tmp_path):
     for file_name in markdown_files + other_files:
         file_path = tmp_path / file_name
         file_path.touch()  # Create the file
+    extension = ".md"
     # Test case 1: Matching files
-    result = final.list_markdown_files(tmp_path, "experiment")
+    result = final.list_files(tmp_path, extension, "experiment")
     expected = ["experiment1.md", "experiment2.md"]
     assert sorted(result) == sorted(expected), f"Test failed: Expected {expected}, but got {result}"
     # Test case 2: No matching files
-    result = final.list_markdown_files(tmp_path, "nonexistent")
+    result = final.list_files(tmp_path, extension, "nonexistent")
     expected = []
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
     # Test case 3: Empty directory
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
-    result = final.list_markdown_files(empty_dir, "experiment")
+    result = final.list_files(empty_dir, extension, "experiment")
     expected = []
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
     #Test case 4: Actual directory
     directory = "/workspaces/CP1-24-final/HeshamElsaman/Data/GPSSine/gs01_gps_sin"
     expected = ["gs01_gps_sin.md"]
-    result = final.list_markdown_files(directory, "gps_sin")
+    result = final.list_files(directory, extension, "gps_sin")
     assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+
+# Testing Listing the Folders
+def test_list_folders(tmp_path):
+    """
+    Test the list_folders function with a temporary directory.
+    """
+    # Set up a temporary directory with folders and files
+    folders = ["experiment_folder1", "experiment_folder2", "other_folder"]
+    files = ["file1.md", "file2.md"]
+    
+    for folder_name in folders:
+        folder_path = tmp_path / folder_name
+        folder_path.mkdir()  # Create the folder
+    
+    for file_name in files:
+        file_path = tmp_path / file_name
+        file_path.touch()  # Create files (to ensure they're ignored)
+    
+    # Test case 1: Matching folders
+    result = final.list_folders(tmp_path, "experiment")
+    expected = ["experiment_folder1", "experiment_folder2"]
+    assert sorted(result) == sorted(expected), f"Test failed: Expected {expected}, but got {result}"
+    
+    # Test case 2: No matching folders
+    result = final.list_folders(tmp_path, "nonexistent")
+    expected = []
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}"
+    
+    # Test case 3: Empty directory
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    result = final.list_folders(empty_dir, "experiment")
+    expected = []
+    assert result == expected, f"Test failed: Expected {expected}, but got {result}."
+    
+    # Test case 4: Actual directory
+    directory = "/workspaces/CP1-24-final/HeshamElsaman/Data/GPSSine/"
+    expected = [f"gs0{i}_gps_sin" for i in range(1,10)]
+    expected += [f"gs{i}_gps_sin" for i in range(10,20)]
+    result = final.list_folders(directory, "gps_sin")
+    assert all([i in expected for i in result]), f"Test failed: Expected {expected}, but got {result}."
 
 # Testing the Non-linear Fitting
 def test_fit_sinusoidal():

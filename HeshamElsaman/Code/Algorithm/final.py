@@ -37,29 +37,52 @@ def read_temp(fpath):
         temp = float(content[0].split(":")[1].strip())
     return temp
 
-# Listing Files According to a filter
-def list_markdown_files(directory, fltr):
+# Listing Files According to an extension and a filter
+def list_files(directory, extension, fltr):
     """
-    Lists markdown files in a directory whose filenames contain a specific filter string.
+    Lists files in a directory that match a specific extension and contain a filter string.
 
     Parameters:
-        directory (str): The directory to search for markdown files.
+        directory (str): The directory to search for files.
+        extension (str): The file extension to filter (e.g., ".md").
         fltr (str): The string to filter filenames (case-sensitive).
 
     Returns:
-        list: A list of markdown filenames (including their relative paths) that match the filter.
+        list: A list of filenames (relative paths) that match the filter and extension.
     """
     try:
-        # Get all files in the directory
-        files = os.listdir(directory)
-        # Filter files by extension (.md) and filter
-        markdown_files = [
-            file for file in files
-            if file.endswith(".md") and fltr in file
+        # List all files in the directory
+        files = [
+            file for file in os.listdir(directory)
+            if os.path.isfile(os.path.join(directory, file)) and file.endswith(extension) and fltr in file
         ]
-        return markdown_files
+        return files
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"The directory {directory} does not exist.") from e
+        raise FileNotFoundError(f"The directory '{directory}' does not exist.") from e
+    except Exception as e:
+        raise RuntimeError(f"An unexpected error occurred: {e}") from e
+
+# Listing Folders According to a filter
+def list_folders(directory, fltr):
+    """
+    Lists folder names in a directory that contain a specific filter string.
+
+    Parameters:
+        directory (str): The directory to search for folders.
+        fltr (str): The string to filter folder names (case-sensitive).
+
+    Returns:
+        list: A list of folder names that match the filter.
+    """
+    try:
+        # List all folders in the directory
+        folders = [
+            folder for folder in os.listdir(directory)
+            if os.path.isdir(os.path.join(directory, folder)) and fltr in folder
+        ]
+        return folders
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"The directory '{directory}' does not exist.") from e
     except Exception as e:
         raise RuntimeError(f"An unexpected error occurred: {e}") from e
 
