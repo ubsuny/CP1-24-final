@@ -217,3 +217,26 @@ def fft_wrapper(filepath, column_x, column_y):
         "fft": fft_result,
         "inverse_fft": inverse_fft_result
     }
+
+
+python
+Copy code
+def calculate_frequency_axis(sample_count, sampling_rate):
+    """
+    Calculate the frequency axis in Hz for FFT results.
+
+    Parameters:
+        sample_count (int): Number of samples in the signal (N).
+        sampling_rate (float): Sampling rate in Hz (samples per second).
+
+    Returns:
+        list: Frequencies corresponding to FFT bins, in Hz.
+    """
+    # Frequency resolution
+    freq_resolution = sampling_rate / sample_count
+
+    # Generate frequencies for FFT bins
+    frequencies = [(k * freq_resolution) for k in range(sample_count // 2 + 1)]
+
+    return frequencies
+    
