@@ -218,9 +218,6 @@ def fft_wrapper(filepath, column_x, column_y):
         "inverse_fft": inverse_fft_result
     }
 
-
-python
-Copy code
 def calculate_frequency_axis(sample_count, sampling_rate):
     """
     Calculate the frequency axis in Hz for FFT results.
