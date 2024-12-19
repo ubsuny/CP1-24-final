@@ -20,14 +20,14 @@ def test_get_temp():
     ''' 
     Tests get_temp gets the correct temperature from the md files
     '''
-    temp = get_temp('/CP1-24-final/iglesias-cardinale/Final/Data/ic001_sinewalk.md')
+    temp = get_temp('/iglesias-cardinale/Final/Data/ic001_sinewalk.md')
     assert temp == 38
 
 def test_list_files():
     '''
     Tests that the number of output files is what we expect
     '''
-    num = len(list_files('/CP1-24-final/iglesias-cardinale/Final/Data', 'ic0', '.md'))
+    num = len(list_files('/iglesias-cardinale/Final/Data', 'ic0', '.md'))
 
     assert num == 10
 
