@@ -5,7 +5,6 @@ designed for different tasks relating to the final
 import os
 import numpy as np
 import distance_calc as dc
-import matplotlib.pyplot as plt
 
 def f_k(t):
     """
@@ -152,10 +151,10 @@ def subtract_ave(y):
     to ensure that it is centered
     about 0.
     """
-    sum=0
+    my_sum=0
     for i in y:
-        sum+=i
-    return np.array(y)-sum/len(y)
+        my_sum+=i
+    return np.array(y)-my_sum/len(y)
 
 def wrap_fft(x,y, inverse):
     """
@@ -174,7 +173,6 @@ def wrap_fft(x,y, inverse):
 
     if condition is True:
         print("Error: Data is not equidistant")
-        return
     if inverse is True:
         fdata=np.fft.ifft(y)
 
@@ -189,6 +187,7 @@ def get_params(name):
     sin wave data from the file which has a name defined by the
     name parameter.
     """
+    p1,p2,p3=0,0,0
     fn=name.rstrip(".csv")
     try:
         with open("/workspaces/CP1-24-final/abruns123/data/"/
@@ -206,6 +205,12 @@ def get_params(name):
     return p1,p2,p3
 
 def get_frequency_axis(x, n):
+    """
+    get_frequency_axis manually determines the 
+    frequency axis of a given list of x values
+    of length 2^n. units are in 1/m such that
+    they may be modified outside the function.
+    """
     num=2**n
     length=x[len(x)-1]
     sample_rate=num/length
@@ -218,10 +223,10 @@ def get_frequency(x,y):
     get_frequency finds the frequency and magnitude
     from filtered fft data
     """
-    max=0
+    maxi=0
     freq=0
     for i, val in enumerate(x):
-        if y[i]>max:
-            max=y[i]
+        if y[i]>maxi:
+            maxi=y[i]
             freq=val
-    return freq, max
+    return freq, maxi
