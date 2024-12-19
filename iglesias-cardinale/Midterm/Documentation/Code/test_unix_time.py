@@ -13,7 +13,7 @@ def test_gettime_gets_correct_month():
     '''Tests that the month recorded from the gps circle data metafile is [10,10]'''
 
     year, month, day, hour, minute, second = gettime(
-        '/iglesias-cardinale/data/ic001_gps_circle_run001.md')
+        'iglesias-cardinale/Midterm/Data/ic001_gps_circle_run001.md')
 
     date = [year, month, day, hour, minute, second]
     assert np.all(date[1] == 10)
