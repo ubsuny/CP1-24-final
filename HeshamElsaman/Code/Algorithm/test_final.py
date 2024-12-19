@@ -145,7 +145,7 @@ def test_check_equidistant():
     assert final.check_equidistant(df, 'x'), "Test failed: Data wasn't recognized as equidistant."
 
     # Non-equidistant data
-    df = pd.DataFrame({'x': [0, 1, 2, 4, 7]})
+    df = pd.DataFrame({'x': [0, 100, 2000, 40, -70]})
     assert not final.check_equidistant(df, 'x'), "Test failed: It's not nonequidistant data."
 
 def test_fft():
@@ -159,7 +159,7 @@ def test_fft():
     assert len(result) == len(df), "Test failed: FFT result length does not match input data."
 
     # Non-equidistant data
-    df = pd.DataFrame({'x': [0, 1, 2, 4, 7], 'y': [0, 1, 0, -1, 0]})
+    df = pd.DataFrame({'x': [0, 100, 2000, 40, -70], 'y': [0, 1, 0, -1, 0]})
     with pytest.raises(ValueError, match="Column 'x' contains non-equidistant data."):
         final.fft(df, 'x', 'y')
 
@@ -176,7 +176,7 @@ def test_inv_fft():
     assert np.allclose(df['y'], np.real(result)), "Test failed: Original data wasn't reconstructed."
 
     # Non-equidistant data
-    df = pd.DataFrame({'x': [0, 1, 2, 4, 7], 'y': [0, 1, 0, -1, 0]})
+    df = pd.DataFrame({'x': [0, 100, 2000, 40, -70], 'y': [0, 1, 0, -1, 0]})
     with pytest.raises(ValueError, match = "Column 'x' contains non-equidistant data."):
         final.inv_fft(df, 'x', y_fft)
 
