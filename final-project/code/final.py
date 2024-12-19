@@ -73,7 +73,23 @@ def list_markdown_files(directory, filename_filter):
     except Exception as e:
         print(f"An error occurred: {e}")
         return []
-        
+
+def sine_function(x, amplitude, frequency, phase, offset):
+    """
+    Sine function for fitting.
+
+    Parameters:
+        x (array-like): Independent variable (e.g., time).
+        amplitude (float): Amplitude of the sine wave.
+        frequency (float): Frequency of the sine wave.
+        phase (float): Phase shift of the sine wave.
+        offset (float): Vertical offset of the sine wave.
+
+    Returns:
+        array-like: Computed sine values for the input x.
+    """
+    return amplitude * np.sin(2 * np.pi * frequency * x + phase) + offset
+
 def non_linear_fitting(x_data, y_data, fit_function, initial_params, step_power, learning_rate=0.01, max_iter=1000):
     """
     Perform non-linear fitting using gradient descent.
