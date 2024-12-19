@@ -44,3 +44,32 @@ def parse_temperature_from_markdown(filepath):
     except FileNotFoundError:
         print(f"File not found: {filepath}")
         return None
+
+def list_markdown_files(directory, filename_filter):
+    """
+    List all markdown files in a directory that match a specific filename filter.
+
+    Parameters:
+        directory (str): Path to the directory containing files.
+        filename_filter (str): A string filter to match filenames (e.g., "sinewalk").
+
+    Returns:
+        list: A list of markdown file paths that match the filter.
+    """
+    try:
+        # Get all files in the directory
+        all_files = os.listdir(directory)
+
+        # Filter files by those ending with '.md' and containing the filename_filter
+        markdown_files = [
+            os.path.join(directory, file) for file in all_files
+            if file.endswith('.md') and filename_filter in file
+        ]
+        return markdown_files
+
+    except FileNotFoundError:
+        print(f"Directory not found: {directory}")
+        return []
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
