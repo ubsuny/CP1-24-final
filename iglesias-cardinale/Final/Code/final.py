@@ -71,11 +71,53 @@ def curvefit(fitting_func, param_guess, xdata, ydata, yunc, learning_rate=1e-4,
     covariance_matrix = np.linalg.inv(jacobian.T @ np.diag(weights) @ jacobian)
     sigma_args = np.sqrt(np.diag(covariance_matrix))
     return params, sigma_args
+
+
+    The scipy wrapper I can't use because of pytests and linting
+
+    
+    def sinefit_wrapper(xdata, ydata, p0=None, yunc=None, return_cov=False):
+    """
+    A wrapper for scipy.optimize.curve_fit that adds uncertainty handling.
+
+    Parameters:
+    - xdata (array-like): The independent variable data.
+    - ydata (array-like): The dependent variable data.
+    - p0 (array-like, optional): Initial guess for the parameters.
+    - yunc (array-like, optional): Standard deviation of ydata (used as weights in the fit).
+    - bounds (2-tuple of array-like, optional): Bounds on the parameters (default: no bounds).
+    - return_cov (bool, optional): If True, return 
+                                    the covariance matrix along with 
+                                    fit parameters (default: False).
+
+    Returns:
+    - popt (array): Optimized parameters.
+    - (optional) pcov (2D array): Covariance matrix of the parameters.
+    """
+    # Ensure data is numpy array
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
+
+    if yunc is not None:
+        yunc = np.array(yunc)
+
+    # Perform the curve fitting
+    try:
+        popt, pcov = [scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
+                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[0],
+                                scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
+                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[1]]
+    except RuntimeError as e:
+        print(f"Error: Curve fitting did not converge. {e}")
+        return None
+
+    if return_cov:
+        return popt, pcov
+    return popt
     '''
 
 import os
 import numpy as np
-import scipy
 
 def fahrenheit_to_kelvin(fahrenheit):
     '''This function converts a given temperature in Degrees Fahrenheit 
@@ -238,45 +280,6 @@ def sine(x, a, b, c, d):
     a*sin(bx+c)+d
     '''
     return a*np.sin(b*x+c) + d
-
-def sinefit_wrapper(xdata, ydata, p0=None, yunc=None, return_cov=False):
-    """
-    A wrapper for scipy.optimize.curve_fit that adds uncertainty handling.
-
-    Parameters:
-    - xdata (array-like): The independent variable data.
-    - ydata (array-like): The dependent variable data.
-    - p0 (array-like, optional): Initial guess for the parameters.
-    - yunc (array-like, optional): Standard deviation of ydata (used as weights in the fit).
-    - bounds (2-tuple of array-like, optional): Bounds on the parameters (default: no bounds).
-    - return_cov (bool, optional): If True, return 
-                                    the covariance matrix along with 
-                                    fit parameters (default: False).
-
-    Returns:
-    - popt (array): Optimized parameters.
-    - (optional) pcov (2D array): Covariance matrix of the parameters.
-    """
-    # Ensure data is numpy array
-    xdata = np.array(xdata)
-    ydata = np.array(ydata)
-
-    if yunc is not None:
-        yunc = np.array(yunc)
-
-    # Perform the curve fitting
-    try:
-        popt, pcov = [scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
-                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[0],
-                                scipy.optimize.curve_fit(sine, xdata, ydata, p0=p0,
-                               sigma=yunc, bounds=(-np.inf, np.inf), absolute_sigma=True)[1]]
-    except RuntimeError as e:
-        print(f"Error: Curve fitting did not converge. {e}")
-        return None
-
-    if return_cov:
-        return popt, pcov
-    return popt
 
 ##THE FIXED PART IS A LIE
 def curve_fit_fixed(func, xdata, ydata, params):
