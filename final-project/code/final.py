@@ -145,3 +145,75 @@ def non_linear_fitting(x_data, y_data, fit_function, initial_params, step_power,
             break
 
     return params
+    
+def check_equidistant(data):
+    """
+    Check if the data points in the independent variable are equidistant.
+
+    Parameters:
+        data (array-like): The independent variable (e.g., time or x-values).
+
+    Returns:
+        bool: True if the data is equidistant, False otherwise.
+    """
+    differences = np.diff(data)
+    return np.allclose(differences, differences[0], atol=1e-6)
+
+def perform_fft(data):
+    """
+    Perform FFT on equidistant data.
+
+    Parameters:
+        data (array-like): The dependent variable (e.g., signal values).
+
+    Returns:
+        array: The FFT of the input data.
+    """
+    return np.fft.fft(data)
+
+def perform_inverse_fft(data):
+    """
+    Perform inverse FFT on frequency-domain data.
+
+    Parameters:
+        data (array-like): The frequency-domain data.
+
+    Returns:
+        array: The inverse FFT of the input data.
+    """
+    return np.fft.ifft(data)
+
+def fft_wrapper(filepath, column_x, column_y):
+    """
+    Wrapper function to load data, check for equidistance, and perform FFT.
+
+    Parameters:
+        filepath (str): Path to the CSV file containing data.
+        column_x (str): Name of the column containing the independent variable.
+        column_y (str): Name of the column containing the dependent variable.
+
+    Returns:
+        dict: Results including equidistance status, FFT, and inverse FFT (if applicable).
+    """
+    # Load data from file
+    df = pd.read_csv(filepath)
+
+    # Extract x and y values
+    x_data = df[column_x].values
+    y_data = df[column_y].values
+
+    # Check for equidistance
+    is_equidistant = check_equidistant(x_data)
+
+    if not is_equidistant:
+        return {"equidistant": False, "message": "Data is not equidistant. FFT cannot be performed."}
+
+    # Perform FFT and inverse FFT
+    fft_result = perform_fft(y_data)
+    inverse_fft_result = perform_inverse_fft(fft_result)
+
+    return {
+        "equidistant": True,
+        "fft": fft_result,
+        "inverse_fft": inverse_fft_result
+    }
