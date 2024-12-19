@@ -1,5 +1,6 @@
 """
-This module contains functions for processing and analyzing GPS motion data as part of the CP1-24 final project.
+This module contains functions for processing and analyzing 
+GPS motion data as part of the CP1-24 final project.
 
 The module provides functionality for:
 - Temperature conversion between Fahrenheit and Kelvin
@@ -35,11 +36,11 @@ def fahrenheit_to_kelvin(temp_f):
     """
     if not isinstance(temp_f, (int, float)):
         raise TypeError("Temperature must be a number")
-    
+
     # Check if temperature is below absolute zero
     if temp_f < -459.67:
         raise ValueError("Temperature cannot be below absolute zero (-459.67°F)")
-        
+
     return (temp_f - 32) * 5/9 + 273.15
 
 def parse_temperature_from_markdown(filepath):
@@ -62,27 +63,27 @@ def parse_temperature_from_markdown(filepath):
     try:
         with open(filepath, 'r', encoding='utf-8') as file:
             content = file.read()
-            
+
         # Look for temperature using various possible formats
         patterns = [
             r'Environment temperature:\s*(-?\d+\.?\d*)°?F',
             r'Temperature:\s*(-?\d+\.?\d*)°?F',
             r'Temp:\s*(-?\d+\.?\d*)°?F'
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, content)
             if match:
                 temp = float(match.group(1))
                 return temp
-                
+
         raise ValueError("No temperature found in markdown file")
-        
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find markdown file: {filepath}")
+
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Could not find markdown file: {filepath}") from exc
     except ValueError as e:
-        raise ValueError(f"Error parsing temperature: {str(e)}")
-    
+        raise ValueError(f"Error parsing temperature: {str(e)}") from e
+
 def list_markdown_files(directory, pattern):
     """
     Lists markdown files in directory that match a given pattern.
@@ -104,57 +105,66 @@ def list_markdown_files(directory, pattern):
 
     if not os.path.exists(directory):
         raise FileNotFoundError(f"Directory not found: {directory}")
-    
+
     if not pattern:
         raise ValueError("Search pattern cannot be empty")
-        
+
     markdown_files = []
-    
+
     for filename in os.listdir(directory):
         if filename.endswith('.md') and pattern in filename:
             full_path = os.path.join(directory, filename)
             markdown_files.append(full_path)
-            
+
     return sorted(markdown_files)  # Sort for consistent ordering
 
 def fit_nonlinear(x, y, initial_params, n_steps=8):
     """
     Simple nonlinear fitting using gradient descent for sine wave.
     Fits: A * sin(2π * f * x + φ) + C
-    
+
     Parameters:
         x (list): Independent variable data
         y (list): Dependent variable data 
         initial_params (dict): Initial guesses for 'A', 'f', 'phi', 'C'
         n_steps (int): Number of iterations (should be power of 2)
-    
+
     Returns:
         dict: Fitted parameters
-    
+
     Raises:
         ValueError: If input invalid or n_steps not power of 2
     """
     # Check power of 2 using bitwise operation
     if n_steps & (n_steps - 1) != 0:
         raise ValueError("n_steps must be a power of 2")
-        
+
     if len(x) != len(y) or len(x) == 0:
         raise ValueError("Invalid input arrays")
     if not all(key in initial_params for key in ['A', 'f', 'phi', 'C']):
         raise TypeError("Missing parameters")
-    
+
     params = initial_params.copy()
     learning_rate = 0.1
-    
+
     for _ in range(n_steps):
-        y_pred = params['A'] * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']) + params['C']
+        # Calculate phase term once to avoid repetition
+        phase = 2 * np.pi * params['f'] * np.array(x) + params['phi']
+
+        # Calculate predicted values
+        y_pred = params['A'] * np.sin(phase) + params['C']
         error = y - y_pred
-        
-        params['A'] += learning_rate * np.mean(error * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']))
-        params['f'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']) * 2 * np.pi * np.array(x))
-        params['phi'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']))
+
+        # Update parameters using gradient descent
+        sin_term = np.sin(phase)
+        cos_term = np.cos(phase)
+
+        params['A'] += learning_rate * np.mean(error * sin_term)
+        params['f'] += (learning_rate * np.mean(error * params['A'] * cos_term *
+                       2 * np.pi * np.array(x)))
+        params['phi'] += learning_rate * np.mean(error * params['A'] * cos_term)
         params['C'] += learning_rate * np.mean(error)
-        
+
     return params
 
 def fft_wrapper(data, timesteps):
@@ -179,36 +189,36 @@ def fft_wrapper(data, timesteps):
         TypeError: If data or timesteps are not numeric arrays
         ValueError: If timesteps are not equidistant within tolerance (1e-5)
     """
-    
+
     if not isinstance(data, (list, np.ndarray)) or not isinstance(timesteps, (list, np.ndarray)):
         raise TypeError("Data and timesteps must be arrays")
-        
+
     # Convert to numpy arrays if needed
     data = np.array(data)
     timesteps = np.array(timesteps)
-    
+
     # Check for equidistant timesteps
     dt = np.diff(timesteps)
     if not np.allclose(dt, dt[0], rtol=1e-5):
         raise ValueError("Data points must be equidistant in time")
-    
+
     # Calculate sample rate
     sample_rate = 1.0 / dt[0]
-    
+
     # Perform FFT and get frequencies
     fft_result = np.fft.fft(data)
     freqs = np.fft.fftfreq(len(data), d=1/sample_rate)
-    
+
     # Shift both frequencies and FFT result to center the spectrum
     freqs = np.fft.fftshift(freqs)
     fft_result = np.fft.fftshift(fft_result)
-    
+
     return freqs, fft_result
 
 def ifft_wrapper(fft_result):
     """
     Wrapper for numpy inverse FFT.
-    
+
     Parameters:
         fft_result (array-like): FFT data to inverse transform
 
@@ -218,25 +228,24 @@ def ifft_wrapper(fft_result):
     Raises:
         TypeError: If input is not a numeric array
     """
-    import numpy as np
-    
+
     if not isinstance(fft_result, (list, np.ndarray)):
         raise TypeError("FFT result must be an array")
-        
+
     # Used .real to only focus on real component, as FFT may introduce small imaginary parts
     return np.fft.ifft(np.fft.ifftshift(fft_result)).real
 
 def calculate_frequency_axis(sample_rate, n_points):
     """
     Calculate frequency axis for FFT in pure Python without numpy.
-    
+
     Parameters:
         sample_rate (float): Sampling rate in Hz
         n_points (int): Number of points in the signal (must be positive integer)
-    
+
     Returns:
         list: List of frequencies centered around 0
-        
+
     Raises:
         TypeError: If n_points is not an integer
         ValueError: If n_points <= 0 or sample_rate <= 0
@@ -248,10 +257,10 @@ def calculate_frequency_axis(sample_rate, n_points):
         raise ValueError("n_points must be positive")
     if sample_rate <= 0:
         raise ValueError("sample_rate must be positive")
-        
+
     # Calculate frequency step
     df = sample_rate / n_points
-    
+
     # Generate frequency points centered around 0
     freqs = []
     if n_points % 2 == 0:
@@ -268,12 +277,5 @@ def calculate_frequency_axis(sample_rate, n_points):
             else:
                 freq = (i - n_points) * df
             freqs.append(freq)
-            
-    return freqs
 
-if __name__ == "__main__":
-    path = 'SchrodingersStruggle/data/final/CJY001_sinewalk.md'
-    print(parse_temperature_from_markdown(path))
-    print(fahrenheit_to_kelvin(32))
-    print(list_markdown_files('SchrodingersStruggle/data/final', 'sinewalk'))
-    print(calculate_frequency_axis(6.0, 6))
+    return freqs
