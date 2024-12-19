@@ -204,8 +204,8 @@ def test_subtract_ave():
     condition=True
     y=final.subtract_ave(y)
     for i in y:
-        if i==0:
-            condition is False
+        if i!=0:
+            condition=False
     assert condition is True
 
 def test_wrap_fft_non_equidistant_data():
