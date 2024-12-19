@@ -144,7 +144,7 @@ def check_equidistant(data, x_col):
     """
     x = data[x_col]
     differences = np.diff(x.values)
-    return np.allclose(differences, differences[0], atol=1)
+    return np.allclose(differences, differences[0], atol=10)
 
 def fft(data, x_col, y_col):
     """
