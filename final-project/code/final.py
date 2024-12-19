@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import os
 
 def fahrenheit_to_kelvin(fahrenheit):
@@ -73,3 +73,59 @@ def list_markdown_files(directory, filename_filter):
     except Exception as e:
         print(f"An error occurred: {e}")
         return []
+        
+def non_linear_fitting(x_data, y_data, fit_function, initial_params, step_power, learning_rate=0.01, max_iter=1000):
+    """
+    Perform non-linear fitting using gradient descent.
+
+    Parameters:
+        x_data (array-like): The independent variable.
+        y_data (array-like): The dependent variable.
+        fit_function (callable): The non-linear function to fit the data.
+        initial_params (list): Initial guess for the parameters of the fit function.
+        step_power (int): Specify step number as 2^n for data subsampling.
+        learning_rate (float): Step size for gradient descent.
+        max_iter (int): Maximum number of iterations for gradient descent.
+
+    Returns:
+        list: Optimized parameters for the fit function.
+    """
+    # Validate step_power
+    num_steps = 2**step_power
+    if num_steps > len(x_data):
+        raise ValueError(f"Step size 2^{step_power} exceeds data length.")
+
+    # Subsample the data based on the step size
+    step_size = len(x_data) // num_steps
+    x_sampled = x_data[::step_size]
+    y_sampled = y_data[::step_size]
+
+    # Convert to numpy arrays for calculations
+    x_sampled = np.array(x_sampled)
+    y_sampled = np.array(y_sampled)
+
+    # Gradient descent optimization
+    params = np.array(initial_params)
+    for iteration in range(max_iter):
+        # Calculate predictions and residuals
+        y_pred = fit_function(x_sampled, *params)
+        residuals = y_pred - y_sampled
+
+        # Calculate the gradient for each parameter
+        gradients = []
+        for i in range(len(params)):
+            # Partial derivative with respect to params[i]
+            params_step = params.copy()
+            params_step[i] += 1e-5  # Small change to compute numerical gradient
+            y_pred_step = fit_function(x_sampled, *params_step)
+            gradient = np.sum(2 * residuals * (y_pred_step - y_pred) / 1e-5)
+            gradients.append(gradient)
+
+        # Update parameters using gradients
+        params -= learning_rate * np.array(gradients)
+
+        # Check for convergence (if the update is very small)
+        if np.linalg.norm(learning_rate * np.array(gradients)) < 1e-6:
+            break
+
+    return params
