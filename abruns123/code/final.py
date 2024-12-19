@@ -170,9 +170,9 @@ def wrap_fft(x,y, inverse):
             print((x[i+1]-val), dif)
             if condition==(np.isclose((x[i+1]-val), dif,rtol=1e-6)):
                 condition=True
-
     if condition is True:
         print("Error: Data is not equidistant")
+        return
     if inverse is True:
         fdata=np.fft.ifft(y)
 
