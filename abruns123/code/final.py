@@ -40,7 +40,7 @@ def parse(path):
 
     return "No temperature in this file."
 
-def file_list(path, filter):
+def file_list(path, my_filter):
     """
     the md_list function goes through all folders
     within a directory defined by path to 
@@ -49,12 +49,12 @@ def file_list(path, filter):
     md=[]
     files=os.listdir(path)
     for file in files:
-        if filter in file:
+        if my_filter in file:
             md.append(file)
     folders=[item for item in files if os.path.isdir(os.path.join(path, item))]
     for folder in folders:
         new_path=path+"/"+folder
-        new_md=file_list(new_path, filter)
+        new_md=file_list(new_path, my_filter)
         for m in new_md:
             md.append(m)
     return md
@@ -107,15 +107,15 @@ def gauss_newton(x, y, initial_params, n, max_iter=100, tolerance=1e-6):
         jac = jacobian(x, params)
 
         # Compute the normal equation: (J^T * J) * delta = J^T * residuals
-        JtJ = np.dot(jac.T, jac)  # J^T * J
-        Jt_res = np.dot(jac.T, res)  # J^T * residuals
-        
+        jtj = np.dot(jac.T, jac)  # J^T * J
+        jt_res = np.dot(jac.T, res)  # J^T * residuals
+
         # Solve for delta (change in parameters)
-        delta = np.linalg.solve(JtJ, Jt_res)
+        delta = np.linalg.solve(jtj, jt_res)
 
         # Update parameters
         params -= delta
-        
+
         # Check for convergence: if the change is small enough, stop
         if np.linalg.norm(delta) < tolerance:
             print(f"Converged after {iteration + 1} iterations")
@@ -138,8 +138,8 @@ def get_sin_data(path):
     for i in range(1,len(lats)-1):
         distances.append(dc.diffm(lats[i], lats[i+1], lons[i], lons[i+1]))
 
-    for i in range(len(distances)):
-        xy_coords.append(dc.get_coords(distances, distances[i], i))
+    for i, v in enumerate(distances):
+        xy_coords.append(dc.get_coords(distances, v, i))
         y,x=xy_coords[i]
         x_pos.append(x)
         y_pos.append(y)
@@ -174,12 +174,12 @@ def wrap_fft(x,y, inverse):
 
     if condition is True:
         print("Error: Data is not equidistant")
-        return 
+        return
     if inverse is True:
         fdata=np.fft.ifft(y)
 
     fdata=np.fft.fft(y)
-   
+
     return fdata
 
 def get_params(name):
@@ -191,7 +191,8 @@ def get_params(name):
     """
     fn=name.rstrip(".csv")
     try:
-        with open("/workspaces/CP1-24-final/abruns123/data/sin_data/plots/parameters.md", "r",encoding='utf-8') as file:
+        with open("/workspaces/CP1-24-final/abruns123/data/"/
+                  "sin_data/plots/parameters.md", "r",encoding='utf-8') as file:
             lines=[line.strip() for line in file.readlines()]
     except FileNotFoundError:
         print(f"Error: The file '{name}' does not exist.")
@@ -201,17 +202,16 @@ def get_params(name):
             p1=float(words[1])
             p2=float(words[2])
             p3=eval(words[3])
-    
+
     return p1,p2,p3
 
 def get_frequency_axis(x, n):
     num=2**n
     length=x[len(x)-1]
     sample_rate=num/length
-    
+
     frequencies=np.linspace(-sample_rate/2, sample_rate/2, num, endpoint=False)
     return frequencies
-    
 
 def get_frequency(x,y):
     """
@@ -225,9 +225,3 @@ def get_frequency(x,y):
             max=y[i]
             freq=val
     return freq, max
-
-
-
-
-
-
