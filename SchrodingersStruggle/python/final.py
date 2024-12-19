@@ -12,7 +12,9 @@ The module provides functionality for:
 All functions include comprehensive unit tests and follow pylint standards.
 """
 
+import os
 import re
+import numpy as np
 
 def fahrenheit_to_kelvin(temp_f):
     """
@@ -39,44 +41,6 @@ def fahrenheit_to_kelvin(temp_f):
         raise ValueError("Temperature cannot be below absolute zero (-459.67°F)")
         
     return (temp_f - 32) * 5/9 + 273.15
-
-def calculate_frequency_axis(sample_rate, num_points):
-    """
-    Calculates frequency axis points for FFT analysis without using numpy.
-    
-    For N points, creates a frequency axis from -fs/2 to +fs/2,
-    where fs is the sampling frequency.
-
-    Parameters:
-        sample_rate (float): Sampling frequency in Hz
-        num_points (int): Number of data points
-
-    Returns:
-        list: Frequency points in Hz
-
-    Raises:
-        TypeError: If inputs are not numeric
-        ValueError: If sample_rate <= 0 or num_points <= 0
-    """
-    if not isinstance(sample_rate, (int, float)) or not isinstance(num_points, int):
-        raise TypeError("Sample rate must be numeric and num_points must be integer")
-    
-    if sample_rate <= 0 or num_points <= 0:
-        raise ValueError("Sample rate and num_points must be positive")
-
-    freq_step = sample_rate / num_points
-    num_freqs = num_points
-    
-    # Generate frequencies from 0 to Nyquist frequency
-    freqs = []
-    for i in range(num_freqs):
-        if i <= num_freqs // 2:
-            freq = i * freq_step
-        else:
-            freq = (i - num_freqs) * freq_step
-        freqs.append(freq)
-
-    return freqs
 
 def parse_temperature_from_markdown(filepath):
     """
@@ -109,7 +73,7 @@ def parse_temperature_from_markdown(filepath):
         for pattern in patterns:
             match = re.search(pattern, content)
             if match:
-                temp = int(match.group(1))
+                temp = float(match.group(1))
                 return temp
                 
         raise ValueError("No temperature found in markdown file")
@@ -119,8 +83,111 @@ def parse_temperature_from_markdown(filepath):
     except ValueError as e:
         raise ValueError(f"Error parsing temperature: {str(e)}")
     
+def list_markdown_files(directory, pattern):
+    """
+    Lists markdown files in directory that match a given pattern.
+
+    Uses os library to find all .md files in specified directory that contain
+    the pattern in their filename. Case-sensitive matching.
+
+    Parameters:
+        directory (str): Path to search for markdown files
+        pattern (str): Pattern to match in filenames (e.g. 'sinewalk')
+
+    Returns:
+        list: List of matching markdown filenames with full paths
+
+    Raises:
+        FileNotFoundError: If directory doesn't exist
+        ValueError: If pattern is empty
+    """
+
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"Directory not found: {directory}")
+    
+    if not pattern:
+        raise ValueError("Search pattern cannot be empty")
+        
+    markdown_files = []
+    
+    for filename in os.listdir(directory):
+        if filename.endswith('.md') and pattern in filename:
+            full_path = os.path.join(directory, filename)
+            markdown_files.append(full_path)
+            
+    return sorted(markdown_files)  # Sort for consistent ordering
+
+def fft_wrapper(data, timesteps):
+    """
+    Wrapper for numpy FFT with data validation and frequency axis generation.
+
+    Validates that input data points are equidistant in time before performing FFT.
+    Handles conversion to proper numpy arrays, calculates appropriate frequency axis,
+    and centers the frequency spectrum around zero.
+
+    Parameters:
+        data (array-like): Signal amplitude data to transform
+        timesteps (array-like): Time points corresponding to data samples.
+                                Must be equidistant.
+
+    Returns:
+        tuple: (frequencies, fft_result)
+            - frequencies: Array of frequency points, centered around 0
+            - fft_result: FFT of input data, shifted to match frequency axis
+
+    Raises:
+        TypeError: If data or timesteps are not numeric arrays
+        ValueError: If timesteps are not equidistant within tolerance (1e-5)
+    """
+    
+    if not isinstance(data, (list, np.ndarray)) or not isinstance(timesteps, (list, np.ndarray)):
+        raise TypeError("Data and timesteps must be arrays")
+        
+    # Convert to numpy arrays if needed
+    data = np.array(data)
+    timesteps = np.array(timesteps)
+    
+    # Check for equidistant timesteps
+    dt = np.diff(timesteps)
+    if not np.allclose(dt, dt[0], rtol=1e-5):
+        raise ValueError("Data points must be equidistant in time")
+    
+    # Calculate sample rate
+    sample_rate = 1.0 / dt[0]
+    
+    # Perform FFT and get frequencies
+    fft_result = np.fft.fft(data)
+    freqs = np.fft.fftfreq(len(data), d=1/sample_rate)
+    
+    # Shift both frequencies and FFT result to center the spectrum
+    freqs = np.fft.fftshift(freqs)
+    fft_result = np.fft.fftshift(fft_result)
+    
+    return freqs, fft_result
+
+def ifft_wrapper(fft_result):
+    """
+    Wrapper for numpy inverse FFT.
+    
+    Parameters:
+        fft_result (array-like): FFT data to inverse transform
+
+    Returns:
+        array: Inverse FFT of input data
+
+    Raises:
+        TypeError: If input is not a numeric array
+    """
+    import numpy as np
+    
+    if not isinstance(fft_result, (list, np.ndarray)):
+        raise TypeError("FFT result must be an array")
+        
+    # Used .real to only focus on real component, as FFT may introduce small imaginary parts
+    return np.fft.ifft(np.fft.ifftshift(fft_result)).real
+
 if __name__ == "__main__":
     path = 'SchrodingersStruggle/data/final/CJY001_sinewalk.md'
     print(parse_temperature_from_markdown(path))
     print(fahrenheit_to_kelvin(32))
-    print(calculate_frequency_axis(100, 8))
+    print(list_markdown_files('SchrodingersStruggle/data/final', 'sinewalk'))

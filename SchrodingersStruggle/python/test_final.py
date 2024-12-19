@@ -13,6 +13,9 @@ All tests follow pytest conventions and test both valid and edge cases.
 """
 
 import pytest
+import math as mt
+import numpy as np
+import random as rd
 import final as f
 
 class TestFahrenheitToKelvin:
@@ -38,32 +41,6 @@ class TestFahrenheitToKelvin:
         """Test that non-numeric inputs raise TypeError"""
         with pytest.raises(TypeError):
             f.fahrenheit_to_kelvin("72")
-
-class TestCalculateFrequencyAxis:
-    """Test suite for frequency axis calculation function"""
-    
-    def test_basic_frequency_axis(self):
-        """Test basic frequency axis calculation"""
-        freqs = f.calculate_frequency_axis(sample_rate=100, num_points=4)
-        expected = [0, 25, -50, -25]
-        assert len(freqs) == 4
-        assert all(abs(a - b) < 1e-10 for a, b in zip(freqs, expected))
-    
-    def test_invalid_inputs(self):
-        """Test error handling for invalid inputs"""
-        with pytest.raises(TypeError):
-            f.calculate_frequency_axis("100", 4)
-        with pytest.raises(TypeError):
-            f.calculate_frequency_axis(100, 4.5)
-        with pytest.raises(ValueError):
-            f.calculate_frequency_axis(-100, 4)
-        with pytest.raises(ValueError):
-            f.calculate_frequency_axis(100, 0)
-            
-    def test_nyquist_frequency(self):
-        """Test that maximum frequency is half the sample rate"""
-        freqs = f.calculate_frequency_axis(sample_rate=1000, num_points=8)
-        assert max(freqs) == pytest.approx(500, rel=1e-10)
 
 class TestParseTemperature:
     """Test suite for markdown temperature parser"""
@@ -97,3 +74,68 @@ class TestParseTemperature:
         test_md.write_text("Date: 2024-01-20\nNotes: None")
         with pytest.raises(ValueError):
             f.parse_temperature_from_markdown(str(test_md))
+
+class TestListMarkdownFiles:
+    """Test suite for markdown file lister"""
+    
+    def test_basic_file_listing(self, tmp_path):
+        """Test basic file listing with pattern"""
+        # Create test files
+        # The .touch() part at the end creates an empty file
+        (tmp_path / "test1_sinewalk.md").touch()
+        (tmp_path / "test2_sinewalk.md").touch()
+        (tmp_path / "other.md").touch()
+        
+        files = f.list_markdown_files(str(tmp_path), "sinewalk")
+        assert len(files) == 2
+        assert all("sinewalk" in f for f in files)
+        
+    def test_empty_directory(self, tmp_path):
+        """Test listing files in empty directory"""
+        files = f.list_markdown_files(str(tmp_path), "sinewalk")
+        assert len(files) == 0
+        
+    def test_no_matching_files(self, tmp_path):
+        """Test when no files match pattern"""
+        (tmp_path / "test.md").touch()
+        files = f.list_markdown_files(str(tmp_path), "sinewalk")
+        assert len(files) == 0
+        
+    def test_directory_not_found(self):
+        """Test error handling for nonexistent directory"""
+        with pytest.raises(FileNotFoundError):
+            f.list_markdown_files("nonexistent_dir", "sinewalk")
+            
+    def test_empty_pattern(self, tmp_path):
+        """Test error handling for empty pattern"""
+        with pytest.raises(ValueError):
+            f.list_markdown_files(str(tmp_path), "")
+class TestFFTWrapper:
+    """Test suite for FFT wrapper functions"""
+    
+    def test_basic_fft(self):
+        """Test basic FFT of sine wave"""
+        import numpy as np
+        t = np.linspace(0, 1, 128)
+        data = np.sin(2 * np.pi * 10 * t)  # 10 Hz sine wave
+        freqs, fft_result = f.fft_wrapper(data, t)
+        magnitude = np.abs(fft_result)
+        # Find the frequency with maximum magnitude
+        peak_freq = abs(freqs[np.argmax(magnitude)])
+        assert abs(peak_freq - 10) < 0.1  # Should find 10 Hz peak
+        
+    def test_non_equidistant_data(self):
+        """Test error for non-equidistant data"""
+        import numpy as np
+        t = [0, 0.1, 0.3, 0.5]  # Non-equidistant
+        data = [0, 1, 0, -1]
+        with pytest.raises(ValueError):
+            f.fft_wrapper(data, t)
+            
+    def test_ifft_recovery(self):
+        """Test that IFFT recovers original signal"""
+        t = np.linspace(0, 1, 128)
+        data = np.sin(2 * np.pi * 10 * t)
+        _, fft_result = f.fft_wrapper(data, t)
+        recovered = f.ifft_wrapper(fft_result)
+        assert np.allclose(data, recovered, rtol=1e-10)
