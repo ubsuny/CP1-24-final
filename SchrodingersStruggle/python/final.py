@@ -117,6 +117,46 @@ def list_markdown_files(directory, pattern):
             
     return sorted(markdown_files)  # Sort for consistent ordering
 
+def fit_nonlinear(x, y, initial_params, n_steps=8):
+    """
+    Simple nonlinear fitting using gradient descent for sine wave.
+    Fits: A * sin(2π * f * x + φ) + C
+    
+    Parameters:
+        x (list): Independent variable data
+        y (list): Dependent variable data 
+        initial_params (dict): Initial guesses for 'A', 'f', 'phi', 'C'
+        n_steps (int): Number of iterations (should be power of 2)
+    
+    Returns:
+        dict: Fitted parameters
+    
+    Raises:
+        ValueError: If input invalid or n_steps not power of 2
+    """
+    # Check power of 2 using bitwise operation
+    if n_steps & (n_steps - 1) != 0:
+        raise ValueError("n_steps must be a power of 2")
+        
+    if len(x) != len(y) or len(x) == 0:
+        raise ValueError("Invalid input arrays")
+    if not all(key in initial_params for key in ['A', 'f', 'phi', 'C']):
+        raise TypeError("Missing parameters")
+    
+    params = initial_params.copy()
+    learning_rate = 0.1
+    
+    for _ in range(n_steps):
+        y_pred = params['A'] * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']) + params['C']
+        error = y - y_pred
+        
+        params['A'] += learning_rate * np.mean(error * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']))
+        params['f'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']) * 2 * np.pi * np.array(x))
+        params['phi'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']))
+        params['C'] += learning_rate * np.mean(error)
+        
+    return params
+
 def fft_wrapper(data, timesteps):
     """
     Wrapper for numpy FFT with data validation and frequency axis generation.
@@ -185,46 +225,6 @@ def ifft_wrapper(fft_result):
         
     # Used .real to only focus on real component, as FFT may introduce small imaginary parts
     return np.fft.ifft(np.fft.ifftshift(fft_result)).real
-
-def fit_nonlinear(x, y, initial_params, n_steps=8):
-    """
-    Simple nonlinear fitting using gradient descent for sine wave.
-    Fits: A * sin(2π * f * x + φ) + C
-    
-    Parameters:
-        x (list): Independent variable data
-        y (list): Dependent variable data 
-        initial_params (dict): Initial guesses for 'A', 'f', 'phi', 'C'
-        n_steps (int): Number of iterations (should be power of 2)
-    
-    Returns:
-        dict: Fitted parameters
-    
-    Raises:
-        ValueError: If input invalid or n_steps not power of 2
-    """
-    # Check power of 2 using bitwise operation
-    if n_steps & (n_steps - 1) != 0:
-        raise ValueError("n_steps must be a power of 2")
-        
-    if len(x) != len(y) or len(x) == 0:
-        raise ValueError("Invalid input arrays")
-    if not all(key in initial_params for key in ['A', 'f', 'phi', 'C']):
-        raise TypeError("Missing parameters")
-    
-    params = initial_params.copy()
-    learning_rate = 0.1
-    
-    for _ in range(n_steps):
-        y_pred = params['A'] * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']) + params['C']
-        error = y - y_pred
-        
-        params['A'] += learning_rate * np.mean(error * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']))
-        params['f'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']) * 2 * np.pi * np.array(x))
-        params['phi'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']))
-        params['C'] += learning_rate * np.mean(error)
-        
-    return params
 
 def calculate_frequency_axis(sample_rate, n_points):
     """
