@@ -11,7 +11,7 @@ the pure python function to calculate frequency axis.
 import os
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
+import scipy
 
 def fahrenheit_to_kelvin(temp_in_f):
     '''
@@ -182,7 +182,8 @@ def resample_data(x, y, n):
     no_of_points = 2 ** n # number of points for fft
     x_equidistant = np.linspace(x[0], x[-1], no_of_points) # interpolating x values to 2^n
 
-    y_equidistant = interp1d(x, y, kind='linear')(x_equidistant)
+    # interpolating the y values to equidistant x array
+    y_equidistant = scipy.interpolate.interp1d(x, y, kind='linear')(x_equidistant)
     #np.interp(x_equidistant, x, y)
 
     return np.array(x_equidistant), np.array(y_equidistant)
