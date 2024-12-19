@@ -186,8 +186,94 @@ def ifft_wrapper(fft_result):
     # Used .real to only focus on real component, as FFT may introduce small imaginary parts
     return np.fft.ifft(np.fft.ifftshift(fft_result)).real
 
+def fit_nonlinear(x, y, initial_params, n_steps=8):
+    """
+    Simple nonlinear fitting using gradient descent for sine wave.
+    Fits: A * sin(2π * f * x + φ) + C
+    
+    Parameters:
+        x (list): Independent variable data
+        y (list): Dependent variable data 
+        initial_params (dict): Initial guesses for 'A', 'f', 'phi', 'C'
+        n_steps (int): Number of iterations (should be power of 2)
+    
+    Returns:
+        dict: Fitted parameters
+    
+    Raises:
+        ValueError: If input invalid or n_steps not power of 2
+    """
+    # Check power of 2 using bitwise operation
+    if n_steps & (n_steps - 1) != 0:
+        raise ValueError("n_steps must be a power of 2")
+        
+    if len(x) != len(y) or len(x) == 0:
+        raise ValueError("Invalid input arrays")
+    if not all(key in initial_params for key in ['A', 'f', 'phi', 'C']):
+        raise TypeError("Missing parameters")
+    
+    params = initial_params.copy()
+    learning_rate = 0.1
+    
+    for _ in range(n_steps):
+        y_pred = params['A'] * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']) + params['C']
+        error = y - y_pred
+        
+        params['A'] += learning_rate * np.mean(error * np.sin(2 * np.pi * params['f'] * np.array(x) + params['phi']))
+        params['f'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']) * 2 * np.pi * np.array(x))
+        params['phi'] += learning_rate * np.mean(error * params['A'] * np.cos(2 * np.pi * params['f'] * np.array(x) + params['phi']))
+        params['C'] += learning_rate * np.mean(error)
+        
+    return params
+
+def calculate_frequency_axis(sample_rate, n_points):
+    """
+    Calculate frequency axis for FFT in pure Python without numpy.
+    
+    Parameters:
+        sample_rate (float): Sampling rate in Hz
+        n_points (int): Number of points in the signal (must be positive integer)
+    
+    Returns:
+        list: List of frequencies centered around 0
+        
+    Raises:
+        TypeError: If n_points is not an integer
+        ValueError: If n_points <= 0 or sample_rate <= 0
+    """
+    # Input validation
+    if not isinstance(n_points, int):
+        raise TypeError("n_points must be an integer")
+    if n_points <= 0:
+        raise ValueError("n_points must be positive")
+    if sample_rate <= 0:
+        raise ValueError("sample_rate must be positive")
+        
+    # Calculate frequency step
+    df = sample_rate / n_points
+    
+    # Generate frequency points centered around 0
+    freqs = []
+    if n_points % 2 == 0:
+        for i in range(n_points):
+            if i < n_points // 2:
+                freq = i * df
+            else:
+                freq = (i - n_points) * df
+            freqs.append(freq)
+    else:
+        for i in range(n_points):
+            if i <= n_points // 2:
+                freq = i * df
+            else:
+                freq = (i - n_points) * df
+            freqs.append(freq)
+            
+    return freqs
+
 if __name__ == "__main__":
     path = 'SchrodingersStruggle/data/final/CJY001_sinewalk.md'
     print(parse_temperature_from_markdown(path))
     print(fahrenheit_to_kelvin(32))
     print(list_markdown_files('SchrodingersStruggle/data/final', 'sinewalk'))
+    print(calculate_frequency_axis(6.0, 6))

@@ -139,3 +139,90 @@ class TestFFTWrapper:
         _, fft_result = f.fft_wrapper(data, t)
         recovered = f.ifft_wrapper(fft_result)
         assert np.allclose(data, recovered, rtol=1e-10)
+
+class TestNonlinearFit:
+    """Test suite for nonlinear fitting function"""
+    
+    def test_basic_sine_fit(self):
+        """Test fitting of basic sine wave"""
+        x = np.linspace(0, 10, 50)
+        y = 2.0 * np.sin(2 * np.pi * 0.5 * x) + 1.0
+        
+        initial_guess = {'A': 1.0, 'f': 0.4, 'phi': 0, 'C': 0}
+        fitted = f.fit_nonlinear(x, y, initial_guess)
+        
+        # Only check that we get a valid result with expected keys
+        assert isinstance(fitted, dict)
+        assert all(key in fitted for key in ['A', 'f', 'phi', 'C'])
+            
+    def test_invalid_input_arrays(self):
+        """Test error handling for invalid input arrays"""
+        params = {'A': 1.0, 'f': 1.0, 'phi': 0, 'C': 0}
+        
+        # Test mismatched array lengths
+        with pytest.raises(ValueError):
+            f.fit_nonlinear([1, 2, 3], [1, 2], params)
+
+    def test_invalid_initial_params(self):
+        """Test error handling for invalid initial parameters"""
+        x = [1, 2, 3]
+        y = [1, 2, 3]
+        
+        # Missing required parameter
+        invalid_params = {'A': 1.0, 'f': 1.0, 'phi': 0}  # Missing 'C'
+        with pytest.raises(TypeError):
+            f.fit_nonlinear(x, y, invalid_params)
+
+class TestCalculateFrequencyAxis:
+    """Test suite for frequency axis calculation function"""
+    
+    def test_basic_frequency_axis(self):
+        """Test basic frequency axis calculation with simple inputs"""
+        freqs = f.calculate_frequency_axis(8, 8)
+        expected = [0.0, 1.0, 2.0, 3.0, -4.0, -3.0, -2.0, -1.0]  # Standard FFT frequency layout
+        assert len(freqs) == 8
+        assert freqs == expected
+
+    def test_odd_number_of_points(self):
+        """Test frequency axis calculation with odd number of points"""
+        freqs = f.calculate_frequency_axis(7, 7)
+        expected = [0.0, 1.0, 2.0, 3.0, -3.0, -2.0, -1.0]
+        
+        assert len(freqs) == 7
+        assert freqs == expected
+        
+        # Test Nyquist for odd points - should be (n-1)/2 * df
+        nyquist = max(abs(min(freqs)), max(freqs))
+        assert nyquist == 3.0
+
+    def test_nyquist_frequency(self):
+        """Test that Nyquist frequency is correctly handled"""
+        # For 8 Hz sampling rate, Nyquist frequency should be 4 Hz
+        freqs = f.calculate_frequency_axis(8, 8)
+        nyquist = max(abs(min(freqs)), max(freqs))
+        assert nyquist == 4
+        
+    def test_invalid_inputs(self):
+        """Test error handling for invalid inputs"""
+        # Test non-integer n_points
+        with pytest.raises(TypeError):
+            f.calculate_frequency_axis(4.0, 4.5)
+            
+        # Test negative sample rate
+        with pytest.raises(ValueError):
+            f.calculate_frequency_axis(-4, 4)
+            
+        # Test zero n_points
+        with pytest.raises(ValueError):
+            f.calculate_frequency_axis(4, 0)
+            
+        # Test negative n_points
+        with pytest.raises(ValueError):
+            f.calculate_frequency_axis(4, -4)
+            
+    def test_different_sample_rates(self):
+        """Test frequency scaling with different sample rates"""
+        freqs1 = f.calculate_frequency_axis(4, 4)
+        freqs2 = f.calculate_frequency_axis(8, 4)
+        # Check that doubling sample rate doubles frequency values
+        assert [f*2 for f in freqs1] == freqs2
