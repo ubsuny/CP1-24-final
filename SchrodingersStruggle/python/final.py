@@ -15,6 +15,7 @@ All functions include comprehensive unit tests and follow pylint standards.
 
 import os
 import re
+import math as mt
 import numpy as np
 
 def fahrenheit_to_kelvin(temp_f):
@@ -24,13 +25,13 @@ def fahrenheit_to_kelvin(temp_f):
     The conversion uses the standard formula:
     K = (°F - 32) × 5/9 + 273.15
 
-    Parameters:
+    Input:
         temp_f (float): Temperature in Fahrenheit
 
-    Returns:
+    Output:
         float: Temperature in Kelvin
 
-    Raises:
+    Exceptions:
         TypeError: If input is not a number
         ValueError: If temperature is below absolute zero (-459.67°F)
     """
@@ -47,16 +48,16 @@ def parse_temperature_from_markdown(filepath):
     """
     Extracts temperature in Fahrenheit from a markdown file.
     
-    Expects markdown file to contain a line with temperature in format:
-    'Environment temperature: XX°F' or similar
+    Expects markdown file to contain a line with temperature in format of
+    'Environment temperature: XX°F'
 
-    Parameters:
+    Input:
         filepath (str): Path to markdown file
 
-    Returns:
+    Output:
         float: Temperature value in Fahrenheit
 
-    Raises:
+    Exceptions:
         FileNotFoundError: If file doesn't exist
         ValueError: If temperature cannot be found or parsed
     """
@@ -91,14 +92,14 @@ def list_markdown_files(directory, pattern):
     Uses os library to find all .md files in specified directory that contain
     the pattern in their filename. Case-sensitive matching.
 
-    Parameters:
+    Input:
         directory (str): Path to search for markdown files
         pattern (str): Pattern to match in filenames (e.g. 'sinewalk')
 
-    Returns:
+    Output:
         list: List of matching markdown filenames with full paths
 
-    Raises:
+    Exceptions:
         FileNotFoundError: If directory doesn't exist
         ValueError: If pattern is empty
     """
@@ -118,94 +119,122 @@ def list_markdown_files(directory, pattern):
 
     return sorted(markdown_files)  # Sort for consistent ordering
 
-def fit_nonlinear(x, y, initial_params, n_steps=8):
+def fit_nonlinear(data_x, data_y, n: int):
     """
-    Simple nonlinear fitting using gradient descent for sine wave.
-    Fits: A * sin(2π * f * x + φ) + C
+    Perform non-linear fitting to data using a sine wave model.
 
-    Parameters:
-        x (list): Independent variable data
-        y (list): Dependent variable data 
-        initial_params (dict): Initial guesses for 'A', 'f', 'phi', 'C'
-        n_steps (int): Number of iterations (should be power of 2)
+    Input:
+        data_x: List of x values (e.g., GPS-displacement x-axis data)
+        data_y: List of y values (e.g., GPS-displacement y-axis data)
+        n: Specifies the step size as 2^n.
 
-    Returns:
-        dict: Fitted parameters
-
-    Raises:
-        ValueError: If input invalid or n_steps not power of 2
+    Output:
+        Best-fit parameters (amplitude, frequency, phi, constant).
     """
-    # Check power of 2 using bitwise operation
-    if n_steps & (n_steps - 1) != 0:
-        raise ValueError("n_steps must be a power of 2")
 
-    if len(x) != len(y) or len(x) == 0:
-        raise ValueError("Invalid input arrays")
-    if not all(key in initial_params for key in ['A', 'f', 'phi', 'C']):
-        raise TypeError("Missing parameters")
+    # Calculate step size based on 2^n
+    step_size = 1 / (2 ** n)
 
-    params = initial_params.copy()
-    learning_rate = 0.1
+    # Check for empty data
+    if len(data_x) == 0 or len(data_y) == 0:
+        raise ValueError("Input data cannot be empty")
 
-    for _ in range(n_steps):
-        # Calculate phase term once to avoid repetition
-        phase = 2 * np.pi * params['f'] * np.array(x) + params['phi']
+    # Estimate constants
+    data_stats = {
+        'mean': sum(data_y) / len(data_y),
+        'range': max(data_y) - min(data_y),
+        'span': data_x[-1] - data_x[0]
+    }
 
-        # Calculate predicted values
-        y_pred = params['A'] * np.sin(phase) + params['C']
-        error = y - y_pred
+    # Estimate frequency from zero crossings
+    zero_crossings = sum(
+        1 for i in range(1, len(data_y))
+        if (data_y[i-1] - data_stats['mean']) * (data_y[i] - data_stats['mean']) < 0
+    )
 
-        # Update parameters using gradient descent
-        sin_term = np.sin(phase)
-        cos_term = np.cos(phase)
+    # Define parameter ranges
+    param_ranges = {
+        'amplitude': (0, data_stats['span']),
+        'frequency': (0, zero_crossings / (2 * data_stats['span']) or 1 / data_stats['span'] * 1.5),
+        'phi': (-mt.pi, mt.pi),
+        'constant': (data_stats['mean'] - abs(data_stats['mean']), 
+                     data_stats['mean'] + abs(data_stats['mean']))
+    }
 
-        params['A'] += learning_rate * np.mean(error * sin_term)
-        params['f'] += (learning_rate * np.mean(error * params['A'] * cos_term *
-                       2 * np.pi * np.array(x)))
-        params['phi'] += learning_rate * np.mean(error * params['A'] * cos_term)
-        params['C'] += learning_rate * np.mean(error)
+    # Generate parameter values based on step size
+    # Step size is int((1 / step_size) + 1), but I ran out of variables for linting.
+    param_values = {
+        key: [
+            start + i * step_size * (end - start)
+            for i in range(int((1 / step_size) + 1))
+        ] for key, (start, end) in param_ranges.items()
+    }
 
-    return params
+    min_error = float('inf')
+    best_params = {}
 
-def fft_wrapper(data, timesteps):
+    # Brace yourself for a horrible nested for loop, since I'm trying to get pure python.
+    # Search over parameter space
+    for amp in param_values['amplitude']:
+        for freq in param_values['frequency']:
+            for phi in param_values['phi']:
+                for const in param_values['constant']:
+                    # Compute residuals
+                    error = sum(
+                        (y - (amp * mt.sin(2 * mt.pi * freq * x + phi) + const)) ** 2
+                        for x, y in zip(data_x, data_y)
+                    )
+                    # Update best parameters if error is smaller
+                    if error < min_error:
+                        min_error = error
+                        best_params = {
+                            'amplitude': amp,
+                            'frequency': freq,
+                            'phi': phi,
+                            'constant': const
+                        }
+
+    return best_params
+
+def fft_wrapper(data, positions):
     """
-    Wrapper for numpy FFT with data validation and frequency axis generation.
+    Wrapper for numpy FFT with data validation and spatial frequency axis generation.
 
-    Validates that input data points are equidistant in time before performing FFT.
-    Handles conversion to proper numpy arrays, calculates appropriate frequency axis,
+    Validates that input data points are equidistant in space before performing FFT.
+    Handles conversion to proper numpy arrays, calculates appropriate spatial frequency axis,
     and centers the frequency spectrum around zero.
 
-    Parameters:
+    Input:
         data (array-like): Signal amplitude data to transform
-        timesteps (array-like): Time points corresponding to data samples.
-                                Must be equidistant.
+        positions (array-like): Spatial positions corresponding to data samples.
+                              Must be equidistant.
 
-    Returns:
+    Output:
         tuple: (frequencies, fft_result)
-            - frequencies: Array of frequency points, centered around 0
+            - frequencies: Array of spatial frequency points (1/distance), centered around 0
             - fft_result: FFT of input data, shifted to match frequency axis
 
-    Raises:
-        TypeError: If data or timesteps are not numeric arrays
-        ValueError: If timesteps are not equidistant within tolerance (1e-5)
+    Exceptions:
+        TypeError: If data or positions are not numeric arrays
+        ValueError: If positions are not equidistant within tolerance (1e-5)
     """
 
-    if not isinstance(data, (list, np.ndarray)) or not isinstance(timesteps, (list, np.ndarray)):
-        raise TypeError("Data and timesteps must be arrays")
+    if not isinstance(data, (list, np.ndarray)) or not isinstance(positions, (list, np.ndarray)):
+        raise TypeError("Data and positions must be arrays")
 
     # Convert to numpy arrays if needed
     data = np.array(data)
-    timesteps = np.array(timesteps)
+    positions = np.array(positions)
 
-    # Check for equidistant timesteps
-    dt = np.diff(timesteps)
-    if not np.allclose(dt, dt[0], rtol=1e-5):
-        raise ValueError("Data points must be equidistant in time")
+    # Check for equidistant positions
+    dx = np.diff(positions)
+    if not np.allclose(dx, dx[0], rtol=1e-5):
+        raise ValueError("Data points must be equidistant in space")
 
-    # Calculate sample rate
-    sample_rate = 1.0 / dt[0]
+    # Calculate spatial sampling rate (1/distance)
+    sample_rate = 1.0 / dx[0]
 
-    # Perform FFT and get frequencies
+    # Perform FFT and get spatial frequencies
     fft_result = np.fft.fft(data)
     freqs = np.fft.fftfreq(len(data), d=1/sample_rate)
 
@@ -219,13 +248,13 @@ def ifft_wrapper(fft_result):
     """
     Wrapper for numpy inverse FFT.
 
-    Parameters:
+    Input:
         fft_result (array-like): FFT data to inverse transform
 
-    Returns:
+    Output:
         array: Inverse FFT of input data
 
-    Raises:
+    Exceptions:
         TypeError: If input is not a numeric array
     """
 
@@ -237,16 +266,16 @@ def ifft_wrapper(fft_result):
 
 def calculate_frequency_axis(sample_rate, n_points):
     """
-    Calculate frequency axis for FFT in pure Python without numpy.
+    Calculate frequency axis for FFT in pure Python.
 
-    Parameters:
-        sample_rate (float): Sampling rate in Hz
+    Input:
+        sample_rate (float): Sampling rate in oscilations per meter
         n_points (int): Number of points in the signal (must be positive integer)
 
-    Returns:
+    Output:
         list: List of frequencies centered around 0
 
-    Raises:
+    Exceptions:
         TypeError: If n_points is not an integer
         ValueError: If n_points <= 0 or sample_rate <= 0
     """
@@ -279,3 +308,65 @@ def calculate_frequency_axis(sample_rate, n_points):
             freqs.append(freq)
 
     return freqs
+
+def rotate_to_horizontal(x, y):
+    """
+    Rotates data to align with x-axis based on start and end points.
+    
+    Input:
+        x (list/array): x coordinates
+        y (list/array): y coordinates
+    
+    Output:
+        x_rot, y_rot: Rotated coordinates with main direction along x-axis
+    """
+    # Validate inputs
+    if not (isinstance(x, (list, np.ndarray)) and isinstance(y, (list, np.ndarray))):
+        raise TypeError("Inputs x and y must be lists or numpy arrays")
+    if (not all(isinstance(i, (int, float)) for i in x) or
+            not all(isinstance(i, (int, float)) for i in y)):
+        raise TypeError("All elements in x and y must be numeric")
+
+    # Convert to numpy arrays if needed
+    x = np.array(x)
+    y = np.array(y)
+
+    # Find angle from start to end point
+    dx = x[-1] - x[0]
+    # Convert to numpy arrays if needed
+    x = np.array(x)
+    y = np.array(y)
+
+    # Find angle from start to end point
+    dx = x[-1] - x[0]
+    dy = y[-1] - y[0]
+    angle = np.arctan2(dy, dx)
+
+    # Add special case for vertical lines
+    if np.allclose(dx, 0):
+        x_rot = np.zeros_like(x)
+        y_rot = y - y[0]  # Translate to start at origin
+        return x_rot, y_rot
+
+    # Calculate original spacing
+    original_length = x[-1] - x[0]
+
+    # Create rotation matrix
+    rot_matrix = np.array([
+        [np.cos(-angle), -np.sin(-angle)],
+        [np.sin(-angle), np.cos(-angle)]
+    ])
+
+    # Center data at origin and rotate
+    x_centered = x - x[0]
+    y_centered = y - y[0]
+    xy = np.vstack((x_centered, y_centered))
+    x_rot, y_rot = rot_matrix @ xy
+
+    # Scale x values to match original spacing
+    x_rot = x_rot * (original_length / (x_rot[-1] - x_rot[0]))
+
+    if y_rot[0] > y_rot[1] and y_rot[1] > y_rot[2]:
+        y_rot = -y_rot
+
+    return x_rot, y_rot

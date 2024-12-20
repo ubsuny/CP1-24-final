@@ -41,7 +41,7 @@ class TestFahrenheitToKelvin:
             f.fahrenheit_to_kelvin("72")
 
 class TestParseTemperature:
-    """Test suite for markdown temperature parser"""
+    """Test class for markdown temperature parser"""
 
     def test_basic_temperature_parse(self, tmp_path):
         """Test parsing of standard temperature format"""
@@ -74,7 +74,7 @@ class TestParseTemperature:
             f.parse_temperature_from_markdown(str(test_md))
 
 class TestListMarkdownFiles:
-    """Test suite for markdown file lister"""
+    """Test class for markdown file lister"""
 
     def test_basic_file_listing(self, tmp_path):
         """Test basic file listing with pattern"""
@@ -109,8 +109,8 @@ class TestListMarkdownFiles:
         with pytest.raises(ValueError):
             f.list_markdown_files(str(tmp_path), "")
 
-class TestFFTWrapper:
-    """Test suite for FFT wrapper functions"""
+class TestFFTiFFTWrappers:
+    """Test class for FFT wrapper functions"""
 
     def test_basic_fft(self):
         """Test basic FFT of sine wave"""
@@ -137,89 +137,140 @@ class TestFFTWrapper:
         recovered = f.ifft_wrapper(fft_result)
         assert np.allclose(data, recovered, rtol=1e-10)
 
-class TestNonlinearFit:
-    """Test suite for nonlinear fitting function"""
+class TestFitNonlinear:
+    """Test class for the fit_nonlinear function"""
 
     def test_basic_sine_fit(self):
-        """Test fitting of basic sine wave"""
-        x = np.linspace(0, 10, 50)
-        y = 2.0 * np.sin(2 * np.pi * 0.5 * x) + 1.0
+        """Test fitting a basic sine wave"""
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = 3 * np.sin(x + np.pi/4) + 1
+        params = f.fit_nonlinear(x, y, 5)
+        assert params['amplitude'] == pytest.approx(3, rel=1e-1)
+        assert params['frequency'] == pytest.approx(1 / (2 * np.pi), rel=1e-1)
+        assert params['phi'] == pytest.approx(np.pi/4, rel=1e-1)
+        assert params['constant'] == pytest.approx(1, rel=1e-1)
 
-        initial_guess = {'A': 1.0, 'f': 0.4, 'phi': 0, 'C': 0}
-        fitted = f.fit_nonlinear(x, y, initial_guess)
+    def test_noisy_sine_fit(self):
+        """Test fitting a noisy sine wave"""
+        np.random.seed(0)
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = 2 * np.sin(3 * x + 1) + 0.5 + np.random.normal(0, 0.1, x.shape)
+        params = f.fit_nonlinear(x, y, 5)
+        # Larger error since it is random.
+        assert params['amplitude'] == pytest.approx(2, rel=2e-1)
+        assert params['frequency'] == pytest.approx(3 / (2 * np.pi), rel=2e-1)
+        assert params['phi'] == pytest.approx(1, rel=2e-1)
+        assert params['constant'] == pytest.approx(0.5, rel=2e-1)
 
-        # Only check that we get a valid result with expected keys
-        assert isinstance(fitted, dict)
-        assert all(key in fitted for key in ['A', 'f', 'phi', 'C'])
+    def test_zero_crossings(self):
+        """Test fitting with zero crossings"""
+        x = np.linspace(0, 4 * np.pi, 100)
+        y = 1.5 * np.sin(0.5 * x + 0.2) + 0.3
+        params = f.fit_nonlinear(x, y, 5)
+        assert params['amplitude'] == pytest.approx(1.5, rel=1e-1)
+        assert params['frequency'] == pytest.approx(0.5 / (2 * np.pi), rel=1e-1)
+        assert params['phi'] == pytest.approx(0.2, rel=1e-1)
+        assert params['constant'] == pytest.approx(0.3, rel=1e-1)
 
-    def test_invalid_input_arrays(self):
-        """Test error handling for invalid input arrays"""
-        params = {'A': 1.0, 'f': 1.0, 'phi': 0, 'C': 0}
-
-        # Test mismatched array lengths
-        with pytest.raises(ValueError):
-            f.fit_nonlinear([1, 2, 3], [1, 2], params)
-
-    def test_invalid_initial_params(self):
-        """Test error handling for invalid initial parameters"""
-        x = [1, 2, 3]
-        y = [1, 2, 3]
-
-        # Missing required parameter
-        invalid_params = {'A': 1.0, 'f': 1.0, 'phi': 0}  # Missing 'C'
+    def test_invalid_input_type(self):
+        """Test that non-numeric inputs raise TypeError"""
         with pytest.raises(TypeError):
-            f.fit_nonlinear(x, y, invalid_params)
+            f.fit_nonlinear("invalid", [1, 2, 3], 2)
+
+    def test_empty_data(self):
+        """Test that empty data raises ValueError"""
+        with pytest.raises(ValueError):
+            f.fit_nonlinear([], [], 2)
 
 class TestCalculateFrequencyAxis:
-    """Test suite for frequency axis calculation function"""
+    """Test class for the calculate_frequency_axis function"""
 
     def test_basic_frequency_axis(self):
-        """Test basic frequency axis calculation with simple inputs"""
-        freqs = f.calculate_frequency_axis(8, 8)
-        expected = [0.0, 1.0, 2.0, 3.0, -4.0, -3.0, -2.0, -1.0]  # Standard FFT frequency layout
-        assert len(freqs) == 8
-        assert freqs == expected
+        """Test basic frequency axis calculation"""
+        sample_rate = 10.0
+        n_points = 8
+        expected_freqs = [0.0, 1.25, 2.5, 3.75, -5.0, -3.75, -2.5, -1.25]
+        freqs = f.calculate_frequency_axis(sample_rate, n_points)
+        assert np.allclose(freqs, expected_freqs, rtol=1e-6)
 
     def test_odd_number_of_points(self):
         """Test frequency axis calculation with odd number of points"""
-        freqs = f.calculate_frequency_axis(7, 7)
-        expected = [0.0, 1.0, 2.0, 3.0, -3.0, -2.0, -1.0]
+        sample_rate = 10.0
+        n_points = 7
+        expected_freqs = [0.0, 1.428571, 2.857143, 4.285714, -4.285714, -2.857143, -1.428571]
+        freqs = f.calculate_frequency_axis(sample_rate, n_points)
+        assert np.allclose(freqs, expected_freqs, rtol=1e-6)
 
-        assert len(freqs) == 7
-        assert freqs == expected
-
-        # Test Nyquist for odd points - should be (n-1)/2 * df
-        nyquist = max(abs(min(freqs)), *map(abs, freqs))
-        assert nyquist == 3.0
-
-    def test_nyquist_frequency(self):
-        """Test that Nyquist frequency is correctly handled"""
-        # For 8 Hz sampling rate, Nyquist frequency should be 4 Hz
-        freqs = f.calculate_frequency_axis(8, 8)
-        nyquist = max(abs(min(freqs)), *map(abs, freqs))
-        assert nyquist == 4
-
-    def test_invalid_inputs(self):
-        """Test error handling for invalid inputs"""
-        # Test non-integer n_points
+    def test_invalid_n_points_type(self):
+        """Test that non-integer n_points raises TypeError"""
         with pytest.raises(TypeError):
-            f.calculate_frequency_axis(4.0, 4.5)
+            f.calculate_frequency_axis(10.0, "8")
 
-        # Test negative sample rate
+    def test_negative_n_points(self):
+        """Test that negative n_points raises ValueError"""
         with pytest.raises(ValueError):
-            f.calculate_frequency_axis(-4, 4)
+            f.calculate_frequency_axis(10.0, -8)
 
-        # Test zero n_points
+    def test_zero_n_points(self):
+        """Test that zero n_points raises ValueError"""
         with pytest.raises(ValueError):
-            f.calculate_frequency_axis(4, 0)
+            f.calculate_frequency_axis(10.0, 0)
 
-        # Test negative n_points
+    def test_negative_sample_rate(self):
+        """Test that negative sample_rate raises ValueError"""
         with pytest.raises(ValueError):
-            f.calculate_frequency_axis(4, -4)
+            f.calculate_frequency_axis(-10.0, 8)
 
-    def test_different_sample_rates(self):
-        """Test frequency scaling with different sample rates"""
-        freqs1 = f.calculate_frequency_axis(4, 4)
-        freqs2 = f.calculate_frequency_axis(8, 4)
-        # Check that doubling sample rate doubles frequency values
-        assert [f*2 for f in freqs1] == freqs2
+    def test_zero_sample_rate(self):
+        """Test that zero sample_rate raises ValueError"""
+        with pytest.raises(ValueError):
+            f.calculate_frequency_axis(0.0, 8)
+class TestRotateToHorizontal:
+    """Test class for the rotate_to_horizontal function"""
+
+    def test_basic_rotation(self):
+        """Test basic rotation to horizontal"""
+        x = [0, 1, 2]
+        y = [0, 1, 2]
+        x_rot, y_rot = f.rotate_to_horizontal(x, y)
+        assert np.allclose(x_rot, [0, 1, 2], rtol=1e-6)
+        assert np.allclose(y_rot, [0, 0, 0], rtol=1e-6)
+
+    def test_horizontal_line(self):
+        """Test rotation of an already horizontal line"""
+        x = [0, 1, 2]
+        y = [1, 1, 1]
+        x_rot, y_rot = f.rotate_to_horizontal(x, y)
+        assert np.allclose(x_rot, [0, 1, 2], rtol=1e-6)
+        assert np.allclose(y_rot, [0, 0, 0], rtol=1e-6)
+
+    def test_vertical_line(self):
+        """Test rotation of a vertical line"""
+        x = [1, 1, 1]
+        y = [0, 1, 2]
+        x_rot, y_rot = f.rotate_to_horizontal(x, y)
+        assert np.allclose(x_rot, [0, 0, 0], rtol=1e-6)
+        assert np.allclose(y_rot, [0, 1, 2], rtol=1e-6)
+
+    def test_negative_slope(self):
+        """Test rotation of a line with negative slope"""
+        x = [0, 1, 2]
+        y = [2, 1, 0]
+        x_rot, y_rot = f.rotate_to_horizontal(x, y)
+        assert np.allclose(x_rot, [0, 1, 2], rtol=1e-6)
+        assert np.allclose(y_rot, [0, 0, 0], rtol=1e-6)
+
+    def test_random_points(self):
+        """Test rotation of random points"""
+        x = [1, 2, 3]
+        y = [4, 5, 6]
+        x_rot, y_rot = f.rotate_to_horizontal(x, y)
+        assert np.allclose(x_rot, [0, 1, 2], rtol=1e-6)
+        assert np.allclose(y_rot, [0, 0, 0], rtol=1e-6)
+
+    def test_invalid_input_type(self):
+        """Test that non-numeric inputs raise TypeError"""
+        with pytest.raises(TypeError):
+            f.rotate_to_horizontal("invalid", [1, 2, 3])
+        with pytest.raises(TypeError):
+            f.rotate_to_horizontal([1, 2, 3], "invalid")
